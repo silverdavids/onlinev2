@@ -1,4 +1,4 @@
-A modern, full-stack web application built using Next.js/React for the frontend and Node.js for the backend, utilizing Axios for robust API communication.
+SMARTBET is not just a gambling web platform — it’s a digital hub designed to bring together online betting, gaming, and entertainment under one roof. It typically offers users access to sports betting markets, casino-style games, and interactive features that make wagering more engaging.
 
 # Features
 Next.js & React: Server-side rendering (SSR), static site generation (SSG), and smooth client-side routing.
