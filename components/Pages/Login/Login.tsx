@@ -7,6 +7,11 @@ import { IconBrandGoogle, IconBrandTwitterFilled, IconBrandFacebookFilled } from
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
+type LoginErrorResponse = {
+    errors?: Record<string, string[]>;
+    message?: string;
+};
+
 export default function Login() {
     // 1. Manage form fields, loading indicators, and explicit server feedback messages
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -21,7 +26,7 @@ export default function Login() {
     };
 
     // 3. Dispatch user credentials via Axios
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         setFeedback({ type: '', message: '' }); // Reset message feedback at start
@@ -65,14 +70,15 @@ export default function Login() {
                 router.push('/dashboard'); 
             }, 1500);
 
-        } catch (error: any) {
+        } catch (error) {
             // Intercept corporate/backend validation structures or bad codes (401, 422)
-            const errorDetails = error.response?.data?.errors;
-            const firstFieldError = errorDetails ? Object.values(errorDetails)[0][0] : null;
+            const responseData = axios.isAxiosError<LoginErrorResponse>(error) ? error.response?.data : undefined;
+            const errorDetails = responseData?.errors;
+            const firstFieldError = errorDetails ? Object.values(errorDetails)[0]?.[0] : null;
             
             setFeedback({ 
                 type: 'error', 
-                message: firstFieldError || error.response?.data?.message || 'Invalid mobile number or password.' 
+                message: firstFieldError || responseData?.message || 'Invalid mobile number or password.' 
             });
         } finally {
             setLoading(false);

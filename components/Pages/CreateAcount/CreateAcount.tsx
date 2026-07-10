@@ -6,6 +6,11 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import { IconBrandGoogle, IconBrandTwitterFilled, IconBrandFacebookFilled } from "@tabler/icons-react";
 
+type RegistrationErrorResponse = {
+    errors?: Record<string, string[]>;
+    message?: string;
+};
+
 export default function CreateAccount() {
     // 1. Initialize form state with all structural fields matching input names
     const [formData, setFormData] = useState({
@@ -22,7 +27,7 @@ export default function CreateAccount() {
     const [message, setMessage] = useState({ type: '', text: '' });
 
     // 2. Dynamically capture keystrokes and checkbox selections
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -31,7 +36,7 @@ export default function CreateAccount() {
     };
 
     // 3. Dispatch the complete payload to your Backend API
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setMessage({ type: '', text: '' });
 
@@ -77,11 +82,12 @@ export default function CreateAccount() {
             });
 
         } catch (error) {
-            const errorDetails = error.response?.data?.errors;
-            const firstError = errorDetails ? Object.values(errorDetails)[0][0] : null;
+            const responseData = axios.isAxiosError<RegistrationErrorResponse>(error) ? error.response?.data : undefined;
+            const errorDetails = responseData?.errors;
+            const firstError = errorDetails ? Object.values(errorDetails)[0]?.[0] : null;
             setMessage({ 
                 type: 'error', 
-                text: firstError || error.response?.data?.message || 'Registration failed. Please try again.' 
+                text: firstError || responseData?.message || 'Registration failed. Please try again.' 
             });
         } finally {
             setLoading(false);
