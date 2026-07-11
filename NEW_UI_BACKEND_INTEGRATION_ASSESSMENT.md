@@ -20,6 +20,18 @@ C:\Users\hp\source\repos\Bet\Bet\WebUI
 
 Issue #11 API Foundation was re-audited against WebUI controller/action definitions and the older working frontend. The corrected API foundation documentation is in `docs/API_FOUNDATION.md`.
 
+## Authentication Contract Verification
+
+Added 2026-07-11 for Issue #12A: BetSoftware.WebUI remains the sole authentication authority. The detailed contract is documented in `docs/WEBUI_AUTHENTICATION_CONTRACTS.md`.
+
+Confirmed WebUI authentication endpoints are `POST /api/Account/Login`, `GET /api/Account/CheckLogin`, `POST /api/Account/LogOff`, `POST /api/Account/Register`, `GET /api/Account/CheckPhone`, `GET /api/Account/CheckUsername`, `GET /api/Account/CheckEmail`, `GET /api/Account/GetOTP`, `POST /api/Account/validate-otp`, `POST /api/Account/VerifyOtpAndSetPassword`, `POST /api/Account/ChangePassWord`, and `POST /api/Account/SetNewPassWord`.
+
+OTP conclusion: OTP is required for the older self-registration flow to verify the phone and set the user's chosen password after registration. OTP is not part of the login endpoint itself.
+
+Cookie/session conclusion: WebUI uses ASP.NET Identity application cookies with credentials, a WebUI-computed cookie name, 30-minute sliding expiration, Secure/SameSite behavior based on environment, and `sid`/`SessionVersion` validation. API login currently does not rotate or initialize `SessionVersion`, while MVC login does; confirm or correct that WebUI behavior before wiring the new authentication UI.
+
+Remaining unknowns: effective deployed cookie domain/path/HttpOnly depend on OWIN defaults or deployment configuration, the deployed CORS transform should be verified without exposing secrets, and inactive-account handling is not enforced in the confirmed API login path.
+
 ## Executive Summary
 
 Confirmed: the new SmartBet UI is a Next.js 14 App Router application using React 18, TypeScript-enabled `.tsx` files, Sass, Bootstrap classes, Headless UI tabs, Swiper, Tabler icons, and Axios. Most sports screens are static templates driven by arrays in `public/data`; only login, logout, registration, dashboard transactions, profile update, deposit, and withdrawal currently call HTTP endpoints.
