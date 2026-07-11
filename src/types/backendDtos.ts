@@ -57,6 +57,18 @@ export type RegisterOnlineResponseDto = {
   expiresAt?: string;
 };
 
+export type VerifyOtpAndSetPasswordRequestDto = {
+  PhoneNumber: string;
+  OtpCode: string;
+  NewPassword: string;
+  ConfirmPassword: string;
+};
+
+export type VerifyOtpAndSetPasswordResponseDto = {
+  success: boolean;
+  message: string;
+};
+
 export type ChangePasswordRequestDto = {
   UserName: string;
   OldPassword: string;

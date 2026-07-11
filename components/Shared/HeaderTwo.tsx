@@ -7,16 +7,28 @@ import { useState, useEffect } from "react";
 import HeaderTwoChat from './HeaderTwoChat';
 import SideNav from './SideNav';
 import NavItem from './NavItem';
+import { useAuth } from '@/src/auth/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function HeaderTwo() {
     const [isCardExpanded, setIsCardExpanded] = useState(false);
     const [isMiddleExpanded, setIsMiddleExpanded] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
+    const { isAuthenticated, logout } = useAuth();
+    const router = useRouter();
 
     const toggleCard = () => {
         setIsCardExpanded(!isCardExpanded);
     };
     const toggleMiddle = () => {
         setIsMiddleExpanded(!isMiddleExpanded);
+    };
+    const handleLogout = async () => {
+        if (loggingOut) return;
+        setLoggingOut(true);
+        await logout();
+        router.push('/login');
+        setLoggingOut(false);
     };
 
     useEffect(() => {
@@ -53,8 +65,14 @@ export default function HeaderTwo() {
                             <NavItem />
                             <li className="dropdown show-dropdown d-block d-sm-none">
                                 <div className="d-flex align-items-center flex-wrap gap-3">
-                                    <Link href="/login" className="cmn-btn second-alt px-xxl-11 rounded-2">Log In</Link>
-                                    <Link href="/create-acount" className="cmn-btn px-xxl-11">Sign Up</Link>
+                                    {isAuthenticated ? (
+                                        <button type="button" onClick={handleLogout} disabled={loggingOut} className="cmn-btn second-alt px-xxl-11 rounded-2">{loggingOut ? 'Logging Out...' : 'Log Out'}</button>
+                                    ) : (
+                                        <>
+                                            <Link href="/login" className="cmn-btn second-alt px-xxl-11 rounded-2">Log In</Link>
+                                            <Link href="/create-acount" className="cmn-btn px-xxl-11">Sign Up</Link>
+                                        </>
+                                    )}
                                 </div>
                             </li>
                         </ul>
@@ -66,7 +84,11 @@ export default function HeaderTwo() {
                             <span className="fw-bold d-block">UGX 1,000</span>
                         </div>
                         <button className="cmn-btn px-xxl-6 d-none d-sm-block d-lg-none d-xxl-block">Deposit</button>
-                        <Link href="/logout" className="cmn-btn second-alt px-xxl-11 rounded-2">Log Out</Link>
+                        {isAuthenticated ? (
+                            <button type="button" onClick={handleLogout} disabled={loggingOut} className="cmn-btn second-alt px-xxl-11 rounded-2">{loggingOut ? 'Logging Out...' : 'Log Out'}</button>
+                        ) : (
+                            <Link href="/login" className="cmn-btn second-alt px-xxl-11 rounded-2">Log In</Link>
+                        )}
                         <div className="d-flex align-items-center gap-2 mt-1">
                             <button type="button" className="py-1 px-2 n11-bg rounded-5 position-relative">
                                 <IconGift height={24} width={24} className="ti ti-gift fs-four" />

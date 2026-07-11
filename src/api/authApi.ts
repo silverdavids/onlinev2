@@ -12,6 +12,8 @@ import type {
   RegisterOnlineRequestDto,
   RegisterOnlineResponseDto,
   SetNewPasswordRequestDto,
+  VerifyOtpAndSetPasswordRequestDto,
+  VerifyOtpAndSetPasswordResponseDto,
 } from "@/src/types/backendDtos";
 import type {
   LoginCredentials,
@@ -55,6 +57,16 @@ export const authApi = {
       toRegisterOnlineRequestDto(form),
       config
     );
+  },
+
+  verifyOtpAndSetPassword(
+    payload: VerifyOtpAndSetPasswordRequestDto,
+    config?: ApiRequestConfig
+  ): Promise<VerifyOtpAndSetPasswordResponseDto> {
+    return apiPost<
+      VerifyOtpAndSetPasswordResponseDto,
+      VerifyOtpAndSetPasswordRequestDto
+    >("/Account/VerifyOtpAndSetPassword", payload, config);
   },
 
   changePassword(

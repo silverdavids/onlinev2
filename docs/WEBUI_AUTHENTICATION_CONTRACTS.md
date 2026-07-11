@@ -107,6 +107,20 @@ Confirmed risk before UI wiring:
 - API login does not rotate `SessionVersion`; see `ApiAccountController.cs:139-152`.
 - Cookie validation rejects missing database `SessionVersion`, missing cookie `sid`, or mismatched values; see `Startup.Auth.cs:50-72`.
 - Because `ApplicationUser.GenerateUserIdentityAsync` only adds `sid` when `SessionVersion` is non-empty, API login can issue a cookie without `sid` for users with no `SessionVersion`; see `ApplicationUser.cs:13-20`.
+## Known Risks
+
+### SessionVersion initialization
+
+Observation:
+MVC login initializes SessionVersion if missing.
+API login may not.
+
+Impact:
+If API login does not initialize SessionVersion,
+subsequent authenticated requests may fail SessionVersion validation.
+
+Status:
+Requires runtime verification during Authentication UI integration.
 
 ## CheckLogin Contract
 

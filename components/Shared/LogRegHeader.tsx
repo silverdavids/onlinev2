@@ -6,16 +6,28 @@ import { IconAdjustmentsHorizontal, IconX } from "@tabler/icons-react";
 import Language from './Language';
 import SideNav from './SideNav';
 import NavItem from './NavItem';
+import { useAuth } from '@/src/auth/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function HeaderMain() {
     const [isCardExpanded, setIsCardExpanded] = useState(false);
     const [isMiddleExpanded, setIsMiddleExpanded] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
+    const { isAuthenticated, logout } = useAuth();
+    const router = useRouter();
 
     const toggleCard = () => {
         setIsCardExpanded(!isCardExpanded);
     };
     const toggleMiddle = () => {
         setIsMiddleExpanded(!isMiddleExpanded);
+    };
+    const handleLogout = async () => {
+        if (loggingOut) return;
+        setLoggingOut(true);
+        await logout();
+        router.push('/login');
+        setLoggingOut(false);
     };
 
     useEffect(() => {
@@ -54,8 +66,17 @@ export default function HeaderMain() {
                             <NavItem />
                             <li className="dropdown show-dropdown d-block d-sm-none">
                                 <div className="d-flex align-items-center flex-wrap gap-3">
-                                    <Link href="/login" className="cmn-btn second-alt px-xxl-11 rounded-2">Log In</Link>
-                                    <Link href="/create-acount" className="cmn-btn px-xxl-11">Sign Up</Link>
+                                    {isAuthenticated ? (
+                                        <>
+                                            <Link href="/dashboard" className="cmn-btn px-xxl-11">Dashboard</Link>
+                                            <button type="button" onClick={handleLogout} disabled={loggingOut} className="cmn-btn second-alt px-xxl-11 rounded-2">{loggingOut ? 'Logging Out...' : 'Log Out'}</button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Link href="/login" className="cmn-btn second-alt px-xxl-11 rounded-2">Log In</Link>
+                                            <Link href="/create-acount" className="cmn-btn px-xxl-11">Sign Up</Link>
+                                        </>
+                                    )}
                                 </div>
                             </li>
                         </ul>
@@ -63,8 +84,17 @@ export default function HeaderMain() {
                     
                     <div className="right-area custom-pos position-relative d-flex gap-0 gap-lg-7 align-items-center me-5 me-xl-10">
                         <Language />
-                        <Link href="/login" className="cmn-btn second-alt px-xxl-11 rounded-2 me-5 me-lg-0 d-none d-sm-block">Log In</Link>
-                        <Link href="/create-acount" className="cmn-btn d-none px-xxl-11 d-sm-block d-lg-none d-xl-block">Sign Up</Link>
+                        {isAuthenticated ? (
+                            <>
+                                <Link href="/dashboard" className="cmn-btn d-none px-xxl-11 d-sm-block d-lg-none d-xl-block">Dashboard</Link>
+                                <button type="button" onClick={handleLogout} disabled={loggingOut} className="cmn-btn second-alt px-xxl-11 rounded-2 me-5 me-lg-0 d-none d-sm-block">{loggingOut ? 'Logging Out...' : 'Log Out'}</button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="cmn-btn second-alt px-xxl-11 rounded-2 me-5 me-lg-0 d-none d-sm-block">Log In</Link>
+                                <Link href="/create-acount" className="cmn-btn d-none px-xxl-11 d-sm-block d-lg-none d-xl-block">Sign Up</Link>
+                            </>
+                        )}
                     </div>
                     <button onClick={toggleCard} className="navbar-toggler mt-1 mt-sm-2 mt-lg-0" type="button" data-bs-toggle="collapse" aria-label="Navbar Toggler"
                         data-bs-target="#navbar-content" aria-expanded="true" id="nav-icon3">

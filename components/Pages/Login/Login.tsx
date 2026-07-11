@@ -5,12 +5,8 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 import { IconBrandGoogle, IconBrandTwitterFilled, IconBrandFacebookFilled } from "@tabler/icons-react";
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-
-type LoginErrorResponse = {
-    errors?: Record<string, string[]>;
-    message?: string;
-};
+import { normalizeApiError } from '@/src/api/apiError';
+import { useAuth } from '@/src/auth/useAuth';
 
 export default function Login() {
     // 1. Manage form fields, loading indicators, and explicit server feedback messages
@@ -18,6 +14,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState({ type: '', message: '' });
     const router = useRouter();
+    const { login } = useAuth();
 
     // 2. Track input value updates dynamically
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,57 +25,39 @@ export default function Login() {
     // 3. Dispatch user credentials via Axios
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (loading) return;
         setLoading(true);
         setFeedback({ type: '', message: '' }); // Reset message feedback at start
 
-        // 4. Debugging Output
-        console.log("Submitting Login Payload:", {
-            username: formData.username,
-            password: formData.password
-        });
-
         try {
-            // Replace with your local or production API endpoint URL string
-            const response = await axios.post('https://smart-bet/v1/login', {
+            await login({
                 username: formData.username,
                 password: formData.password,
-            }, {
-                headers: { 
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json' 
-                }
+                rememberMe: true,
             });
-
-            // Extract payload data returned from your server
-            const data = response.data;
-
-            // Save authorization tokens and basic user indicators locally
-            if (data.token) {
-                localStorage.setItem('auth_token', data.token);
-                // Optional: cache a stringified user profile if returned
-                if (data.user) {
-                    localStorage.setItem('user_profile', JSON.stringify(data.user));
-                }
-            }
 
             setFeedback({ 
                 type: 'success', 
-                message: data.message || 'Login successful! Redirecting to dashboard...' 
+                message: 'Login successful! Redirecting...' 
             });
 
             setTimeout(() => {
-                router.push('/dashboard'); 
+                const params = new URLSearchParams(window.location.search);
+                const returnUrl = params.get('returnUrl');
+                const safeReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//')
+                    ? returnUrl
+                    : '/dashboard';
+                router.push(safeReturnUrl);
             }, 1500);
 
         } catch (error) {
             // Intercept corporate/backend validation structures or bad codes (401, 422)
-            const responseData = axios.isAxiosError<LoginErrorResponse>(error) ? error.response?.data : undefined;
-            const errorDetails = responseData?.errors;
-            const firstFieldError = errorDetails ? Object.values(errorDetails)[0]?.[0] : null;
+            const apiError = normalizeApiError(error);
+            const firstFieldError = apiError.details?.[0];
             
             setFeedback({ 
                 type: 'error', 
-                message: firstFieldError || responseData?.message || 'Invalid mobile number or password.' 
+                message: firstFieldError || apiError.message || 'Invalid mobile number or password.' 
             });
         } finally {
             setLoading(false);
@@ -163,7 +142,7 @@ export default function Login() {
                                                 <Link href="#" className="n11-bg px-3 py-2 rounded-5"><IconBrandGoogle className="ti ti-brand-google fs-four fw-bold" /></Link>
                                             </div>
                                         </div>
-                                        <span className="d-center gap-1">Create your account? <Link className="g1-color" href="/create-account">Sign Up Now</Link></span>
+                                        <span className="d-center gap-1">Create your account? <Link className="g1-color" href="/create-acount">Sign Up Now</Link></span>
                                     </div>
                                 </div>
                             </div>

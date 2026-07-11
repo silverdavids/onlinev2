@@ -3,13 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import React, { useState } from 'react'
-import axios from 'axios'
 import { IconBrandGoogle, IconBrandTwitterFilled, IconBrandFacebookFilled } from "@tabler/icons-react";
+import { useRouter } from 'next/navigation';
+import { authApi } from '@/src/api/authApi';
+import { normalizeApiError } from '@/src/api/apiError';
+import { useAuth } from '@/src/auth/useAuth';
 
-type RegistrationErrorResponse = {
-    errors?: Record<string, string[]>;
-    message?: string;
-};
+type RegistrationStep = 'details' | 'otp';
 
 export default function CreateAccount() {
     // 1. Initialize form state with all structural fields matching input names
@@ -23,8 +23,16 @@ export default function CreateAccount() {
         national_nin: '',
         agree: false
     });
+    const [otpData, setOtpData] = useState({
+        otpCode: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [step, setStep] = useState<RegistrationStep>('details');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const router = useRouter();
+    const { login } = useAuth();
 
     // 2. Dynamically capture keystrokes and checkbox selections
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,13 +43,16 @@ export default function CreateAccount() {
         }));
     };
 
+    const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setOtpData((prev) => ({ ...prev, [name]: value }));
+    };
+
     // 3. Dispatch the complete payload to your Backend API
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (loading) return;
         setMessage({ type: '', text: '' });
-
-        // Console log data in browser
-        console.log("Form Data Submitted:", formData);
 
         if (!formData.agree) {
             setMessage({ type: 'error', text: 'You must accept the Terms and Conditions.' });
@@ -51,43 +62,73 @@ export default function CreateAccount() {
         setLoading(true);
 
         try {
-            // Sends the entire updated state model downstream
-            const response = await axios.post('https://smart-bet/v1/register', {
-                first_name: formData.first_name,
-                last_name: formData.last_name,
+            const response = await authApi.register({
+                firstName: formData.first_name,
+                surname: formData.last_name,
                 username: formData.username,
-                phone_number: formData.phone_number,
+                phoneNumber: formData.phone_number,
                 email: formData.email,
-                birth_date: formData.birth_date, // Formatted as YYYY-MM-DD naturally by type="date"
-                national_nin: formData.national_nin
-            }, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
+                dob: formData.birth_date,
+                nin: formData.national_nin
             });
 
-            setMessage({ type: 'success', text: response.data.message || 'Account created successfully!' });
-            
-            // Reset form fields on success
-            setFormData({ 
-                first_name: '', 
-                last_name: '', 
-                username: '', 
-                phone_number: '', 
-                email: '', 
-                birth_date: '', 
-                national_nin: '', 
-                agree: false 
+            setMessage({
+                type: 'success',
+                text: response.message || 'Account created successfully. Enter the OTP sent to your phone and create a password.'
             });
+            setStep('otp');
 
         } catch (error) {
-            const responseData = axios.isAxiosError<RegistrationErrorResponse>(error) ? error.response?.data : undefined;
-            const errorDetails = responseData?.errors;
-            const firstError = errorDetails ? Object.values(errorDetails)[0]?.[0] : null;
+            const apiError = normalizeApiError(error);
+            const firstError = apiError.details?.[0];
             setMessage({ 
                 type: 'error', 
-                text: firstError || responseData?.message || 'Registration failed. Please try again.' 
+                text: firstError || apiError.message || 'Registration failed. Please try again.' 
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (loading) return;
+        setMessage({ type: '', text: '' });
+
+        if (otpData.newPassword !== otpData.confirmPassword) {
+            setMessage({ type: 'error', text: 'Passwords do not match.' });
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await authApi.verifyOtpAndSetPassword({
+                PhoneNumber: formData.phone_number,
+                OtpCode: otpData.otpCode,
+                NewPassword: otpData.newPassword,
+                ConfirmPassword: otpData.confirmPassword,
+            });
+
+            if (!response.success) {
+                throw new Error(response.message || 'OTP verification failed.');
+            }
+
+            await login({
+                username: formData.phone_number,
+                password: otpData.newPassword,
+                rememberMe: true,
+            });
+
+            setMessage({ type: 'success', text: 'Registration complete. Redirecting to dashboard...' });
+            setTimeout(() => {
+                router.push('/dashboard');
+            }, 1500);
+        } catch (error) {
+            const apiError = normalizeApiError(error);
+            setMessage({
+                type: 'error',
+                text: apiError.details?.[0] || apiError.message || 'OTP verification failed. Please try again.'
             });
         } finally {
             setLoading(false);
@@ -127,6 +168,7 @@ export default function CreateAccount() {
                                         )}
 
                                         <div className="login_section__form">
+                                            {step === 'details' ? (
                                             <form onSubmit={handleSubmit}>
                                                  <div className="mb-5 mb-md-6">
                                                     <input 
@@ -221,6 +263,59 @@ export default function CreateAccount() {
                                                     {loading ? 'Processing...' : 'Confirm Registration'}
                                                 </button>
                                             </form>
+                                            ) : (
+                                            <form onSubmit={handleOtpSubmit}>
+                                                <div className="mb-5 mb-md-6">
+                                                    <input
+                                                        className="n11-bg"
+                                                        name="otpCode"
+                                                        placeholder="OTP Code"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={otpData.otpCode}
+                                                        onChange={handleOtpChange}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="mb-5 mb-md-6">
+                                                    <input
+                                                        className="n11-bg"
+                                                        name="newPassword"
+                                                        placeholder="Create Password"
+                                                        type="password"
+                                                        value={otpData.newPassword}
+                                                        onChange={handleOtpChange}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="mb-5 mb-md-6">
+                                                    <input
+                                                        className="n11-bg"
+                                                        name="confirmPassword"
+                                                        placeholder="Confirm Password"
+                                                        type="password"
+                                                        value={otpData.confirmPassword}
+                                                        onChange={handleOtpChange}
+                                                        required
+                                                    />
+                                                </div>
+                                                <button
+                                                    className="cmn-btn px-5 py-3 mb-6 w-100"
+                                                    type="submit"
+                                                    disabled={loading}
+                                                >
+                                                    {loading ? 'Verifying...' : 'Verify OTP & Login'}
+                                                </button>
+                                                <button
+                                                    className="cmn-btn second-alt px-5 py-3 mb-6 w-100"
+                                                    type="button"
+                                                    disabled={loading}
+                                                    onClick={() => setStep('details')}
+                                                >
+                                                    Back
+                                                </button>
+                                            </form>
+                                            )}
                                         </div>
                                         <div className="login_section__socialmedia text-center mb-6">
                                             <span className="mb-6">Or continue with</span>

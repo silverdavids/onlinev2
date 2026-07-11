@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { IconWallet, IconCreditCard, IconCreditCardOff, IconLogout, IconUser, IconSettings, IconBellRinging, IconHistory, } from "@tabler/icons-react";
 import { amountData } from '@/public/data/dashBoard';
 import DepositCard from './DepositCard';
@@ -9,7 +9,6 @@ import { Tab } from '@headlessui/react';
 import WithdrawalAmount from './WithdrawalAmount';
 import Link from 'next/link';
 import { dashboardTabs } from '@/public/data/dashTabs';
-import axios from 'axios';
 
 export default function Dashboard() {
     const [activeItem, setActiveItem] = useState(dashboardTabs[0]);
@@ -29,9 +28,9 @@ export default function Dashboard() {
     };
 
     // --- Transactions State Management ---
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [txLoading, setTxLoading] = useState<boolean>(true);
-    const [txError, setTxError] = useState<string>('');
+    const [transactions] = useState<any[]>([]);
+    const [txLoading] = useState<boolean>(false);
+    const [txError] = useState<string>('');
 
     // 1. Isolated state object strictly scoped to this component instance
     const [aboutYouData, setAboutYouData] = useState({
@@ -52,36 +51,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState({ type: '', text: '' });
 
-    // --- Dynamic Transaction Fetching via Axios ---
-    useEffect(() => {
-        // Keeping the hook wrapper sync, defining the async operation internally
-        const fetchTransactionHistory = async () => {
-            try {
-                setTxLoading(true);
-                setTxError('');
-
-                const token = localStorage.getItem('auth_token');
-
-                const response = await axios.get('https://smart-bet/v1/transactions/mobile-money', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                // Extract transaction items array safely
-                setTransactions(response.data.data || response.data || []);
-            } catch (err: any) {
-                console.error("Transaction fetch error:", err);
-                setTxError(err.response?.data?.message || 'No available transaction history.');
-            } finally {
-                setTxLoading(false);
-            }
-        };
-
-        fetchTransactionHistory();
-    }, []);
+    // Dashboard account data integration is deferred; do not use legacy bearer-token calls here.
 
     // 2. Event handler strictly managing fields inside this form scope
     const handleAboutYouChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -126,40 +96,11 @@ export default function Dashboard() {
         setLoading(true);
         setFeedback({ type: '', text: '' });
 
-        const aboutYouPayload = {
-            first_name: aboutYouData.firstName,
-            last_name: aboutYouData.lastName,
-            date_of_birth: `${aboutYouData.dobYear}-${aboutYouData.dobMonth.padStart(2, '0')}-${aboutYouData.dobDay.padStart(2, '0')}`,
-            phone_number: `${aboutYouData.countryCode}${aboutYouData.phoneNumber}`,
-            address: aboutYouData.address,
-            gender: aboutYouData.gender === '1' ? 'Male' : aboutYouData.gender === '2' ? 'Female' : '',
-            city_region: aboutYouData.cityRegion,
-            country: aboutYouData.country
-        };
-
-        // 4. Debugging Output
-        console.log("Submitting Profile Payload:", aboutYouPayload);
-
-        try {
-            const response = await axios.post('https://smart-bet/v1/user/update-profile', aboutYouPayload, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            setFeedback({
-                type: 'success',
-                text: response.data.message || 'Profile information updated successfully!'
-            });
-        } catch (error: any) {
-            setFeedback({
-                type: 'error',
-                text: error.response?.data?.message || 'Oops! Something went wrong. Please try again.'
-            });
-        } finally {
-            setLoading(false);
-        }
+        setFeedback({
+            type: 'error',
+            text: 'Profile updates are not connected yet.'
+        });
+        setLoading(false);
     };
 
     return (

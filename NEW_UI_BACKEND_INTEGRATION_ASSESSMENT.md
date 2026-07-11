@@ -32,6 +32,12 @@ Cookie/session conclusion: WebUI uses ASP.NET Identity application cookies with 
 
 Remaining unknowns: effective deployed cookie domain/path/HttpOnly depend on OWIN defaults or deployment configuration, the deployed CORS transform should be verified without exposing secrets, and inactive-account handling is not enforced in the confirmed API login path.
 
+## Issue #13 Authentication UI Integration
+
+Added 2026-07-11: Authentication UI integration replaced hardcoded bearer-token login/register/logout behavior with the confirmed WebUI cookie-based flow. The implementation adds a root auth provider, one startup `CheckLogin` call, provider-backed login/logout, WebUI registration plus OTP/password setup, dashboard route protection, and minimal header auth-state handling.
+
+No WebUI backend files were modified. Dashboard/account data integration remains deferred; the dashboard is only protected from unauthenticated access. Details are documented in `docs/AUTHENTICATION_UI_INTEGRATION.md`.
+
 ## Executive Summary
 
 Confirmed: the new SmartBet UI is a Next.js 14 App Router application using React 18, TypeScript-enabled `.tsx` files, Sass, Bootstrap classes, Headless UI tabs, Swiper, Tabler icons, and Axios. Most sports screens are static templates driven by arrays in `public/data`; only login, logout, registration, dashboard transactions, profile update, deposit, and withdrawal currently call HTTP endpoints.
