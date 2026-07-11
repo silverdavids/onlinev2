@@ -38,6 +38,12 @@ Added 2026-07-11: Authentication UI integration replaced hardcoded bearer-token 
 
 No WebUI backend files were modified. Dashboard/account data integration remains deferred; the dashboard is only protected from unauthenticated access. Details are documented in `docs/AUTHENTICATION_UI_INTEGRATION.md`.
 
+## Dashboard & Account Integration
+
+Added 2026-07-11: Dashboard/account integration now uses WebUI as the source of truth for `GET /api/Online/UserInfo` and `GET /api/CompanySettings/OnlineSettings`. The new UI has an `AccountProvider` for authenticated account information and balance, plus an `OnlineSettingsProvider` for anonymous betting-limit settings.
+
+The header balance now comes from `/api/Online/UserInfo` and the dashboard includes a non-invasive account overview panel. Existing deposit, withdrawal, transactions, sports, odds, betslip, booking, and live betting flows were intentionally not wired. Details are documented in `docs/DASHBOARD_ACCOUNT_INTEGRATION.md`.
+
 ## Executive Summary
 
 Confirmed: the new SmartBet UI is a Next.js 14 App Router application using React 18, TypeScript-enabled `.tsx` files, Sass, Bootstrap classes, Headless UI tabs, Swiper, Tabler icons, and Axios. Most sports screens are static templates driven by arrays in `public/data`; only login, logout, registration, dashboard transactions, profile update, deposit, and withdrawal currently call HTTP endpoints.

@@ -1,10 +1,12 @@
 import type {
   AccountBonusesResponseDto,
+  OnlineSettingsDto,
   OnlineUserInformationDto,
 } from "@/src/types/backendDtos";
 import type {
   AccountBonusesViewModel,
   AccountProfileViewModel,
+  OnlineSettingsViewModel,
 } from "@/src/types/viewModels";
 
 export const toAccountProfileViewModel = (
@@ -21,4 +23,12 @@ export const toAccountBonusesViewModel = (
 ): AccountBonusesViewModel => ({
   wallets: dto.wallets,
   transactions: dto.transactions,
+});
+
+export const toOnlineSettingsViewModel = (
+  dto: OnlineSettingsDto
+): OnlineSettingsViewModel => ({
+  minStake: dto.MinStake,
+  maxStake: dto.MaxStake,
+  maxPayout: dto.MaxPayOut,
 });

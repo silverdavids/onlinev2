@@ -33,6 +33,12 @@ export type AccountProfileViewModel = {
   phoneNumber: string | null;
 };
 
+export type OnlineSettingsViewModel = {
+  minStake: number | null;
+  maxStake: number | null;
+  maxPayout: number | null;
+};
+
 export type AccountBonusesViewModel = {
   wallets: Array<{
     campaignName: string;

@@ -8,6 +8,8 @@ import HeaderTwoChat from './HeaderTwoChat';
 import SideNav from './SideNav';
 import NavItem from './NavItem';
 import { useAuth } from '@/src/auth/useAuth';
+import { useAccount } from '@/src/account/useAccount';
+import { formatUgx } from '@/src/account/formatCurrency';
 import { useRouter } from 'next/navigation';
 
 export default function HeaderTwo() {
@@ -15,7 +17,16 @@ export default function HeaderTwo() {
     const [isMiddleExpanded, setIsMiddleExpanded] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
     const { isAuthenticated, logout } = useAuth();
+    const { balance, isLoadingAccount, accountError } = useAccount();
     const router = useRouter();
+    const balanceText =
+        typeof balance === 'number'
+            ? formatUgx(balance)
+            : isLoadingAccount
+                ? 'Loading...'
+                : accountError
+                    ? 'Unavailable'
+                    : 'Unavailable';
 
     const toggleCard = () => {
         setIsCardExpanded(!isCardExpanded);
@@ -79,10 +90,12 @@ export default function HeaderTwo() {
                     </div>
                     <div
                         className="right-area custom-pos custom-postwo position-relative d-flex gap-3 gap-xl-7 align-items-center me-5 me-xl-10 align-items-center">
-                        <div className="text-end d-none d-sm-block">
-                            <span className="fs-seven mb-1 d-block">Your balance</span>
-                            <span className="fw-bold d-block">UGX 1,000</span>
-                        </div>
+                        {isAuthenticated && (
+                            <div className="text-end d-none d-sm-block">
+                                <span className="fs-seven mb-1 d-block">Your balance</span>
+                                <span className="fw-bold d-block">{balanceText}</span>
+                            </div>
+                        )}
                         <button className="cmn-btn px-xxl-6 d-none d-sm-block d-lg-none d-xxl-block">Deposit</button>
                         {isAuthenticated ? (
                             <button type="button" onClick={handleLogout} disabled={loggingOut} className="cmn-btn second-alt px-xxl-11 rounded-2">{loggingOut ? 'Logging Out...' : 'Log Out'}</button>

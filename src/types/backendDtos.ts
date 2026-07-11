@@ -113,9 +113,9 @@ export type AccountBonusesResponseDto = {
 };
 
 export type OnlineSettingsDto = {
-  HasBonus?: boolean;
-  BonusType?: string;
-  [key: string]: unknown;
+  MinStake: number | null;
+  MaxStake: number | null;
+  MaxPayOut: number | null;
 };
 
 export type LocaleSettingsDto = {

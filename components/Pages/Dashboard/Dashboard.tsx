@@ -9,9 +9,15 @@ import { Tab } from '@headlessui/react';
 import WithdrawalAmount from './WithdrawalAmount';
 import Link from 'next/link';
 import { dashboardTabs } from '@/public/data/dashTabs';
+import { useAuth } from '@/src/auth/useAuth';
+import { useAccount } from '@/src/account/useAccount';
+import { formatUgx } from '@/src/account/formatCurrency';
 
 export default function Dashboard() {
     const [activeItem, setActiveItem] = useState(dashboardTabs[0]);
+    const { user, isAuthenticated } = useAuth();
+    const { account, balance, isLoadingAccount, accountLoaded, accountError, refreshAccount } = useAccount();
+    const balanceDisplay = typeof balance === 'number' ? formatUgx(balance) : 'Unavailable';
 
     const handleClick = (itemName: any) => {
         setActiveItem(itemName);
@@ -110,6 +116,49 @@ export default function Dashboard() {
                     <div className="row">
                         <div className="col-12 gx-0 gx-sm-4">
                             <div className="hero_area__main">
+                                <div className="pay_method__paymethod p-4 p-lg-6 p2-bg rounded-8 mb-8 mb-md-10">
+                                    <div className="pay_method__paymethod-title d-flex align-items-center justify-content-between gap-3 mb-5 mb-md-6 flex-wrap">
+                                        <div className="d-flex align-items-center gap-3">
+                                            <IconUser className="ti ti-user fs-four g1-color" />
+                                            <h5 className="n10-color">Account overview</h5>
+                                        </div>
+                                        {isAuthenticated && (
+                                            <button
+                                                type="button"
+                                                className="cmn-btn py-2 px-5 fw-bold"
+                                                disabled={isLoadingAccount}
+                                                onClick={() => void refreshAccount().catch(() => undefined)}>
+                                                {isLoadingAccount ? 'Refreshing...' : 'Refresh'}
+                                            </button>
+                                        )}
+                                    </div>
+                                    {!isAuthenticated ? (
+                                        <p className="mb-0 text-white-50">Sign in to view your account details.</p>
+                                    ) : accountError ? (
+                                        <p className="mb-0 text-danger fw-bold">{accountError}</p>
+                                    ) : isLoadingAccount && !accountLoaded ? (
+                                        <p className="mb-0 text-white-50">Loading account details...</p>
+                                    ) : (
+                                        <div className="row gy-4">
+                                            <div className="col-sm-6 col-lg-3">
+                                                <span className="fs-seven text-white-50 d-block mb-1">Username</span>
+                                                <span className="fw-bold n10-color text-break">{user?.username ?? 'Unavailable'}</span>
+                                            </div>
+                                            <div className="col-sm-6 col-lg-3">
+                                                <span className="fs-seven text-white-50 d-block mb-1">Phone</span>
+                                                <span className="fw-bold n10-color text-break">{account?.phoneNumber ?? user?.phone ?? 'Unavailable'}</span>
+                                            </div>
+                                            <div className="col-sm-6 col-lg-3">
+                                                <span className="fs-seven text-white-50 d-block mb-1">Account ID</span>
+                                                <span className="fw-bold n10-color text-break">{account?.accountId ?? 'Unavailable'}</span>
+                                            </div>
+                                            <div className="col-sm-6 col-lg-3">
+                                                <span className="fs-seven text-white-50 d-block mb-1">Balance</span>
+                                                <span className="fw-bold n10-color text-break">{balanceDisplay}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 <Tab.Group>
                                     <div className="row gy-6 gy-xxl-0 singletab">
                                         <div className="col-xxl-3">

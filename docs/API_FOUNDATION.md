@@ -77,7 +77,7 @@ Handled WebUI/older-frontend patterns:
 | `authApi.setNewPassword` | POST | `/Account/SetNewPassWord` | `/api/Account/SetNewPassWord` | `UserName?`, `NewPassword`, `ConfirmPassword`, `Code?`, `PhoneNumber?` | `{ Item1, Item2 }` from tuple serialization | OnlineClient cookie |
 | `accountApi.getOnlineClientInformation` | GET | `/Online/UserInfo` | `/api/Online/UserInfo` | none | `{ AccountId, Balance, UserId, PhoneNumber }` | OnlineClient/Teller/Manager cookie |
 | `accountApi.getAccountBonuses` | GET | `/Account/Bonuses` | `/api/Account/Bonuses` | none | `{ wallets, transactions }` | OnlineClient cookie |
-| `accountApi.getOnlineSettings` | GET | `/CompanySettings/OnlineSettings` | `/api/CompanySettings/OnlineSettings` | none | online limits/settings object, exact fields owned by repository | Anonymous |
+| `accountApi.getOnlineSettings` | GET | `/CompanySettings/OnlineSettings` | `/api/CompanySettings/OnlineSettings` | none | `{ MinStake, MaxStake, MaxPayOut }` | Anonymous |
 | `accountApi.getLocaleSettings` | GET | `/CompanySettings/Locale` | `/api/CompanySettings/Locale` | none | locale settings object, exact fields owned by repository | Auth cookie |
 | `accountApi.getBonusSettings` | GET | `/CompanySettings/Bonus` | `/api/CompanySettings/Bonus` | none | bonus settings object, exact fields owned by repository | Auth cookie |
 | `accountApi.getLiveSettings` | GET | `/CompanySettings/Live` | `/api/CompanySettings/Live` | none | live settings object, exact fields owned by repository | Auth cookie |
@@ -98,9 +98,9 @@ C:\Users\hp\source\repos\thebet-online (2)\thebet-online\src\api\index.js
 ## Unconfirmed or Deferred
 
 - `Account/Bonuses` is confirmed in WebUI, but the exact wallet/transaction entity field set should still be treated as backend-owned.
-- `CompanySettings/*` DTO field names come from repository projections not fully enumerated in this foundation. They are intentionally typed as extensible objects.
+- `CompanySettings/OnlineSettings` is confirmed as `{ MinStake, MaxStake, MaxPayOut }`. Other `CompanySettings/*` DTO field names come from repository projections not fully enumerated in this foundation.
 - Match, odds, ticket, booking, payment, and live-update wrappers are deferred. They belong to later issues.
-- UI session restoration is deferred to Issue #12. The safest confirmed endpoint for that work is `GET /api/Account/CheckLogin`, followed by `GET /api/Online/UserInfo` after authentication is confirmed.
+- Dashboard/account data now uses `GET /api/Online/UserInfo` after authentication is confirmed. Sports, odds, ticket, booking, payment, and live-update wrappers are deferred.
 
 ## Adapters and DTOs
 

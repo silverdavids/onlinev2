@@ -1,6 +1,8 @@
-import { apiGet, type ApiRequestConfig } from "@/src/api/apiClient";
+import { apiClient, apiGet, type ApiRequestConfig } from "@/src/api/apiClient";
+import { ApiError } from "@/src/api/apiError";
 import {
   toAccountBonusesViewModel,
+  toOnlineSettingsViewModel,
   toAccountProfileViewModel,
 } from "@/src/adapters/accountAdapters";
 import type {
@@ -14,14 +16,21 @@ import type {
 import type {
   AccountBonusesViewModel,
   AccountProfileViewModel,
+  OnlineSettingsViewModel,
 } from "@/src/types/viewModels";
 
 export const accountApi = {
   async getOnlineClientInformation(
     config?: ApiRequestConfig
   ): Promise<AccountProfileViewModel> {
-    const data = await apiGet<OnlineUserInformationDto>("/Online/UserInfo", config);
-    return toAccountProfileViewModel(data);
+    const response = await apiClient.get<OnlineUserInformationDto>("/Online/UserInfo", config);
+    if (response.status === 204) {
+      throw new ApiError("Account information unavailable", {
+        code: "REQUEST_FAILED",
+        status: 204,
+      });
+    }
+    return toAccountProfileViewModel(response.data);
   },
 
   async getAccountBonuses(config?: ApiRequestConfig): Promise<AccountBonusesViewModel> {
@@ -29,8 +38,9 @@ export const accountApi = {
     return toAccountBonusesViewModel(data);
   },
 
-  getOnlineSettings(config?: ApiRequestConfig): Promise<OnlineSettingsDto> {
-    return apiGet<OnlineSettingsDto>("/CompanySettings/OnlineSettings", config);
+  async getOnlineSettings(config?: ApiRequestConfig): Promise<OnlineSettingsViewModel> {
+    const data = await apiGet<OnlineSettingsDto>("/CompanySettings/OnlineSettings", config);
+    return toOnlineSettingsViewModel(data);
   },
 
   getLocaleSettings(config?: ApiRequestConfig): Promise<LocaleSettingsDto> {

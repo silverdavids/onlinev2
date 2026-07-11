@@ -4,6 +4,8 @@ import "@/public/scss/style.scss";
 import MainFooter from "@/components/Shared/MainFooter";
 import FooterCard from "@/components/Shared/FooterCard";
 import { AuthProvider } from "@/src/auth/AuthProvider";
+import { AccountProvider } from "@/src/account/AccountProvider";
+import { OnlineSettingsProvider } from "@/src/settings/OnlineSettingsProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,11 +23,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <main>
-            {children}
-            <FooterCard />
-            <MainFooter />
-          </main>
+          <AccountProvider>
+            <OnlineSettingsProvider>
+              <main>
+                {children}
+                <FooterCard />
+                <MainFooter />
+              </main>
+            </OnlineSettingsProvider>
+          </AccountProvider>
         </AuthProvider>
       </body>
     </html>
