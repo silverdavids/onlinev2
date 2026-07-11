@@ -8,6 +8,18 @@ Path roots used in file references:
 - Older UI root: `C:\Users\hp\source\repos\thebet-online (2)\thebet-online`
 - Unless an absolute path is shown, file references are relative to the relevant root above and include line numbers.
 
+## Correction Note: WebUI Source of Truth
+
+Added 2026-07-11: BetSoftware.WebCore is non-operational and incompatible with the deployed SmartBet backend. Treat any WebCore endpoint or DTO observations as non-authoritative.
+
+The operational ASP.NET MVC5 backend source of truth is BetSoftware.WebUI, located in this environment at:
+
+```text
+C:\Users\hp\source\repos\Bet\Bet\WebUI
+```
+
+Issue #11 API Foundation was re-audited against WebUI controller/action definitions and the older working frontend. The corrected API foundation documentation is in `docs/API_FOUNDATION.md`.
+
 ## Executive Summary
 
 Confirmed: the new SmartBet UI is a Next.js 14 App Router application using React 18, TypeScript-enabled `.tsx` files, Sass, Bootstrap classes, Headless UI tabs, Swiper, Tabler icons, and Axios. Most sports screens are static templates driven by arrays in `public/data`; only login, logout, registration, dashboard transactions, profile update, deposit, and withdrawal currently call HTTP endpoints.
