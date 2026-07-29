@@ -44,6 +44,34 @@ Added 2026-07-11: Dashboard/account integration now uses WebUI as the source of 
 
 The header balance now comes from `/api/Online/UserInfo` and the dashboard includes a non-invasive account overview panel. Existing deposit, withdrawal, transactions, sports, odds, betslip, booking, and live betting flows were intentionally not wired. Details are documented in `docs/DASHBOARD_ACCOUNT_INTEGRATION.md`.
 
+## Prematch Sports Contract Verification
+
+Added 2026-07-14: Prematch sports and fixtures were audited as a documentation-only contract issue. WebUI confirms `/api/Matches/GetSetCount`, `/api/Matches/GetTopMatches`, `/api/Matches/GetCountriesWithLeagues`, `/api/Matches/GetHourMatches`, `/api/Matches/GetSetMatches`, `/api/Matches/GetMatchDetails`, `/api/Matches/GetMatchByShortCode`, `/api/Matches/GetLeagues`, and `/api/Matches/GetUpdates`.
+
+The older frontend's full prematch feed is not sourced from WebUI; it calls the configured active matches service root via `getGames()`. WebUI provides football-oriented match, league, country, top-match, and odds-update endpoints, but no confirmed general sport hierarchy. Details and integration risks are documented in `docs/WEBUI_PREMATCH_SPORTS_CONTRACTS.md`.
+
+## Active Matches Service Verification
+
+Added 2026-07-14: The older frontend was re-audited to confirm the responsibility split between the active matches service and WebUI. The active matches service is used only as `GET {SERVICE_URL}/` for current active prematch matches and full `MatchOdds`; it is loaded immediately and every 15 minutes into `games$`.
+
+WebUI remains authoritative for authentication, account/session data, online settings, countries/leagues support data, top-match widgets, booking, bet placement, changed-odds validation, current-set/status validation, started-match rejection, payments, and receipts. New UI prematch integration should use separate `webUiApiClient` and `activeMatchesApiClient` clients. Details are documented in `docs/ACTIVE_MATCHES_SERVICE_CONTRACT.md`.
+
+## Active Matches Runtime Verification
+
+Added 2026-07-14: Runtime verification of `https://api-games.smbet.net/` confirmed direct non-credentialed browser GET works from `Origin: http://localhost:3000` with `Access-Control-Allow-Origin: *`, `GET,HEAD,OPTIONS`, gzip compression, and `Cache-Control: public, max-age=300`.
+
+The captured response contained 126 matches, 31,096 odds, no duplicate `MatchNo`, no duplicate `OriginalMatchId`, no duplicate `MatchOddId`, and no malformed required match/odd fields. The decoded JSON was about 4.7 MB and the raw gzip transfer was about 323 KB.
+
+Important blocker: read-only checks against the accessible configured WebUI database found none of the active-service `OriginalMatchId` values in `dbo.Matches.BetServiceMatchNo` and none of the sampled active-service `MatchOddId` values in `dbo.MatchOdds.MatchOddId`. For the new read-only foundation, `MatchOddId` is diagnostic only; unresolved `OriginalMatchId` alignment remains the critical blocker. Prematch browsing may proceed only as read-only after product approval; booking and bet placement must wait until the target WebUI database is confirmed to share the active service `OriginalMatchId` values. Details are documented in `docs/ACTIVE_MATCHES_RUNTIME_VERIFICATION.md`.
+
+## Prematch Feed Foundation
+
+Added 2026-07-14: The new UI now has a read-only active prematch feed foundation. The active matches service uses a separate non-credentialed client with `NEXT_PUBLIC_MATCHES_API_BASE_URL`, defaulting to `https://api-games.smbet.net`, and does not share the WebUI `/api` prefix or cookie behavior.
+
+The provider loads once on mount, refreshes every 5 minutes, skips hidden-tab refreshes, avoids overlapping requests, cancels on unmount, and preserves existing feed data during background refresh. No sport UI, betslip, booking, placement, or live betting behavior was wired.
+
+Correction: `MatchOddId` is preserved for traceability but is not the frontend selection key for this foundation. Selection identity is `OriginalMatchId|BetCategory|BetOption|Line|BookMakerId`; unresolved `OriginalMatchId` alignment with WebUI remains the critical blocker before booking or bet placement. Details are documented in `docs/PREMATCH_FEED_FOUNDATION.md`.
+
 ## Executive Summary
 
 Confirmed: the new SmartBet UI is a Next.js 14 App Router application using React 18, TypeScript-enabled `.tsx` files, Sass, Bootstrap classes, Headless UI tabs, Swiper, Tabler icons, and Axios. Most sports screens are static templates driven by arrays in `public/data`; only login, logout, registration, dashboard transactions, profile update, deposit, and withdrawal currently call HTTP endpoints.
