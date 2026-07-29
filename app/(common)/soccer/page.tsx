@@ -1,15 +1,5 @@
-import SoccerLive from "@/components/Pages/Soccer/SoccerLive";
-import TopSoccer from "@/components/Pages/Soccer/TopSoccer";
-import UpCmingSoccer from "@/components/Pages/Soccer/UpCmingSoccer";
-import HeaderMain from "@/components/Shared/HeaderMain";
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-  return (
-    <>
-      <HeaderMain />
-      <TopSoccer />
-      <SoccerLive />
-      <UpCmingSoccer />
-    </>
-  )
+export default function Page() {
+  return <PrematchSportPage sportId="football" sportName="Football" />;
 }

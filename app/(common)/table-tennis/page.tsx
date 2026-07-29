@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopTableTennis from '@/components/Pages/TableTennis/TopTableTennis';
-import UpCmingTableTennis from '@/components/Pages/TableTennis/UpCmingTableTennis';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopTableTennis />
-            <UpCmingTableTennis />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="table-tennis" sportName="Table Tennis" />;
 }

@@ -1,11 +1,5 @@
-import TopSquash from '@/components/Pages/squash/TopSquash';
-import HeaderMain from '@/components/Shared/HeaderMain';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopSquash />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="squash" sportName="Squash" />;
 }

@@ -1,13 +1,10 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopPenaltyShootout from '@/components/Pages/PenaltyShootout/TopPenaltyShootout';
-import UpCmingPenaltyShootout from '@/components/Pages/PenaltyShootout/UpCmingPenaltyShootout';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopPenaltyShootout />
-            <UpCmingPenaltyShootout />
-        </>
-    )
+export default function Page() {
+  return (
+    <PrematchSportPage
+      sportId="penalty-shootout"
+      sportName="Penalty Shootout"
+    />
+  );
 }

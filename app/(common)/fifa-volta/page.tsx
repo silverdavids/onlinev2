@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import FifaVoltaLive from '@/components/Pages/FifaVolta/FifaVoltaLive';
-import TopFifaVolta from '@/components/Pages/FifaVolta/TopFifaVolta';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopFifaVolta />
-            <FifaVoltaLive />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="fifa-volta" sportName="FIFA: Volta" />;
 }

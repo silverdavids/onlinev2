@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopRugby from '@/components/Pages/Rugby/TopRugby';
-import UpCmingRugby from '@/components/Pages/Rugby/UpCmingRugby';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopRugby />
-            <UpCmingRugby />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="rugby" sportName="Rugby" />;
 }

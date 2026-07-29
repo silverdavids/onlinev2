@@ -1,11 +1,10 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import UpCmingAmericanFootball from '@/components/Pages/AmericanFootball/UpCmingAmericanFootball';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <UpCmingAmericanFootball />
-        </>
-    )
+export default function Page() {
+  return (
+    <PrematchSportPage
+      sportId="american-football"
+      sportName="American Football"
+    />
+  );
 }

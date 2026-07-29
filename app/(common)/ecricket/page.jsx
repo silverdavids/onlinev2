@@ -1,15 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import EcricketLive from '@/components/Pages/Ecricket/EcricketLive';
-import TopEcricket from '@/components/Pages/Ecricket/TopEcricket';
-import UpCmingEcricket from '@/components/Pages/Ecricket/UpCmingEcricket';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopEcricket />
-            <EcricketLive />
-            <UpCmingEcricket />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="ecricket" sportName="eCricket" />;
 }

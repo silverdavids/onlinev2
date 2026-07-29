@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopBandy from '@/components/Pages/Bandy/TopBandy';
-import UpCmingBandy from '@/components/Pages/Bandy/UpCmingBandy';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopBandy />
-            <UpCmingBandy />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="bandy" sportName="Bandy" />;
 }

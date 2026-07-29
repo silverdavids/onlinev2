@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopBoxing from '@/components/Pages/Boxing/TopBoxing';
-import UpCmingBoxing from '@/components/Pages/Boxing/UpCmingBoxing';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopBoxing />
-            <UpCmingBoxing />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="boxing" sportName="Boxing" />;
 }

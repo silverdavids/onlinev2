@@ -1,19 +1,17 @@
 import HeaderMain from "@/components/Shared/HeaderMain";
-import HeroSlider from "@/components/Pages/Home/HeroSlider";
-import HeroMatches from "@/components/Pages/Home/HeroMatches";
-import LiveMatches from "@/components/Pages/Home/LiveMatches";
-import MiddleSlider from "@/components/Pages/Home/MiddleSlider";
+import FeaturedMatchesSlider from "@/components/Pages/Home/FeaturedMatchesSlider";
+import GameCategories from "@/components/Pages/Home/GameCategories";
 import UpComingEvents from "@/components/Pages/Home/UpComingEvents";
 
 export default function Home() {
   return (
     <>
       <HeaderMain />
-      <HeroSlider />
-      <HeroMatches />
-      <LiveMatches />
-      <MiddleSlider />
-      <UpComingEvents />
+      <div className="smartbet-home">
+        <FeaturedMatchesSlider />
+        <GameCategories />
+        <UpComingEvents />
+      </div>
     </>
   );
 }

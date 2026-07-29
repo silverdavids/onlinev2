@@ -1,11 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import UpCmingVolleyball from '@/components/Pages/Volleyball/UpCmingVolleyball';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <UpCmingVolleyball />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="volleyball" sportName="Volleyball" />;
 }

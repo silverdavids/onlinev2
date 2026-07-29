@@ -1,11 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopAussieRules from '@/components/Pages/AussieRules/TopAussieRules';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopAussieRules />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="aussie-rules" sportName="Aussie Rules" />;
 }

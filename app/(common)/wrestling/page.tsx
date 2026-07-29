@@ -1,11 +1,5 @@
-import TopWrestling from '@/components/Pages/Wrestling/TopWrestling';
-import HeaderMain from '@/components/Shared/HeaderMain';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopWrestling />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="wrestling" sportName="Wrestling" />;
 }

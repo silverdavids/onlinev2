@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopDarts from '@/components/Pages/Darts/TopDarts';
-import UpCmingDarts from '@/components/Pages/Darts/UpCmingDarts';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopDarts />
-            <UpCmingDarts />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="darts" sportName="Darts" />;
 }

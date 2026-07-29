@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopIceHockey from '@/components/Pages/IceHockey/TopIceHockey';
-import UpCmingIceHockey from '@/components/Pages/IceHockey/UpCmingIceHockey';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopIceHockey />
-            <UpCmingIceHockey />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="ice-hockey" sportName="Ice Hockey" />;
 }

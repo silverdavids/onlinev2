@@ -1,15 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import FutsalLive from '@/components/Pages/Futsal/FutsalLive';
-import TopFutsal from '@/components/Pages/Futsal/TopFutsal';
-import UpCmingFutsal from '@/components/Pages/Futsal/UpCmingFutsal';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopFutsal />
-            <FutsalLive />
-            <UpCmingFutsal />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="futsal" sportName="Futsal" />;
 }

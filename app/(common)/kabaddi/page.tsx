@@ -1,11 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopKabaddi from '@/components/Pages/Kabaddi/TopKabaddi';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopKabaddi />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="kabaddi" sportName="Kabaddi" />;
 }

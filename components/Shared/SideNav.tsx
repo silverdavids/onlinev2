@@ -2,11 +2,43 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { IconStarFilled } from '@tabler/icons-react';
-import { popularData, otherSportsData } from '@/public/data/navData';
-import { usePathname } from 'next/navigation';
+import { popularData } from '@/public/data/navData';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Fragment, useMemo, useState } from 'react';
+import { useActiveMatches } from '@/src/matches/useActiveMatches';
+import { ACTIVE_FEED_SPORT_ID } from '@/src/domain/sports';
+
+const ALL_LEAGUES = "all";
+const LONG_LEAGUE_LIST_THRESHOLD = 10;
 
 export default function SideNav() {
     const path = usePathname()
+    const searchParams = useSearchParams()
+    const selectedLeague = searchParams.get("league")?.trim() || ALL_LEAGUES
+    const { sports, isLoading, error } = useActiveMatches()
+    const [leagueSearch, setLeagueSearch] = useState("")
+    const [showFootballLeagues, setShowFootballLeagues] = useState(true)
+    const footballSport = useMemo(
+        () =>
+            sports.find((sport) => sport.id === ACTIVE_FEED_SPORT_ID) ?? {
+                id: ACTIVE_FEED_SPORT_ID,
+                name: "Football",
+                leagues: [],
+                fixtureCount: 0,
+            },
+        [sports]
+    )
+    const filteredLeagues = useMemo(() => {
+        const query = leagueSearch.trim().toLowerCase()
+        if (!query) return footballSport.leagues
+
+        return footballSport.leagues.filter((league) =>
+            league.name.toLowerCase().includes(query)
+        )
+    }, [footballSport.leagues, leagueSearch])
+    const isFootballRoute = path === "/" || path === "/soccer"
+    const allLeaguesSelected = selectedLeague === ALL_LEAGUES
+
     return (
         <>
             <ul className="secend-actives bg1-color rounded-5 d-flex flex-column gap-5 mb-5">
@@ -32,34 +64,101 @@ export default function SideNav() {
             <hr className="py-0 my-0" />
             <h5 className="mb-4 mb-md-6 mt-4 mt-md-6">Categories</h5>
             <ul className="aside_namelist d-flex flex-column gap-2">
-                {popularData.map((popularSingle) => (
-                    <li
-                        className={`d-flex align-items-center justify-content-between px-3 py-2 rounded-3 gap-5  ${path == popularSingle.href && 'n11-bg'}`} key={popularSingle.id}>
-                        <Link href={popularSingle.href} className="d-flex align-items-center gap-2"><Image
-                            width={16} height={16} src={popularSingle.image} alt="icon" />{popularSingle.linkText}</Link>
-                        {path == popularSingle.href &&
-                            <button type="button" className="g1-color">
-                                <IconStarFilled width={16} height={16} className="ti ti-star navinStyleClass navinstyle" />
-                            </button>
-                        }
-                    </li>
-                ))}
-            </ul>
-            <hr className="py-0 my-5" />
-            <h5 className="mb-4 mb-md-6">Leagues</h5>
-            <ul className="aside_namelist d-flex flex-column gap-2 mb-15">
-                {otherSportsData.map((otherSingle) => (
-                    <li
-                        className={`d-flex align-items-center justify-content-between px-3 py-2 rounded-3 gap-5  ${path == otherSingle.href && 'n11-bg'}`} key={otherSingle.id}>
-                        <Link href={otherSingle.href} className="d-flex align-items-center gap-2"><Image
-                            width={16} height={16} src={otherSingle.image} alt="icon" />{otherSingle.linkText}</Link>
-                        {path == otherSingle.href &&
-                            <button type="button" className="g1-color">
-                                <IconStarFilled width={16} height={16} className="ti ti-star navinStyleClass navinstyle" />
-                            </button>
-                        }
-                    </li>
-                ))}
+                {popularData.map((popularSingle) => {
+                    const isFootball = popularSingle.href === "/soccer"
+                    const isActiveSport = isFootball
+                        ? isFootballRoute
+                        : path === popularSingle.href
+                    const fixtureCount = isFootball ? footballSport.fixtureCount : 0
+
+                    return (
+                        <Fragment key={popularSingle.id}>
+                            <li
+                                className={`d-flex align-items-center justify-content-between px-3 py-2 rounded-3 gap-3 ${isActiveSport ? 'n11-bg' : ''}`}>
+                                <Link href={popularSingle.href} className="d-flex align-items-center gap-2 sportsbook-sport-link"><Image
+                                    width={16} height={16} src={popularSingle.image} alt="icon" />{popularSingle.linkText}</Link>
+                                <span className="fs-eight cpoint ms-auto">
+                                    {fixtureCount}
+                                </span>
+                                {isFootball && footballSport.leagues.length > 0 && (
+                                    <button
+                                        aria-expanded={showFootballLeagues}
+                                        aria-label="Toggle football leagues"
+                                        className="sportsbook-league-toggle"
+                                        onClick={() => setShowFootballLeagues((expanded) => !expanded)}
+                                        type="button"
+                                    >
+                                        {showFootballLeagues ? "-" : "+"}
+                                    </button>
+                                )}
+                                {!isFootball && path == popularSingle.href &&
+                                    <button type="button" className="g1-color">
+                                        <IconStarFilled width={16} height={16} className="ti ti-star navinStyleClass navinstyle" />
+                                    </button>
+                                }
+                            </li>
+
+                            {isFootball && isFootballRoute && showFootballLeagues && (
+                                <li className="sportsbook-sidebar-leagues">
+                                    {footballSport.leagues.length > LONG_LEAGUE_LIST_THRESHOLD && (
+                                        <input
+                                            aria-label="Filter football leagues"
+                                            className="sportsbook-sidebar-league-search"
+                                            onChange={(event) => setLeagueSearch(event.target.value)}
+                                            placeholder="Search leagues"
+                                            type="search"
+                                            value={leagueSearch}
+                                        />
+                                    )}
+                                    <ul className="sportsbook-sidebar-league-list">
+                                        <li className={allLeaguesSelected ? "is-active" : ""}>
+                                            <Link href="/soccer">
+                                                <span className="sportsbook-sidebar-league-name">
+                                                    <span className="sportsbook-sidebar-league-dot" />
+                                                    All Leagues
+                                                </span>
+                                                <span className="sportsbook-sidebar-league-count">
+                                                    {footballSport.fixtureCount}
+                                                </span>
+                                            </Link>
+                                        </li>
+                                        {isLoading && (
+                                            <li>
+                                                <span className="fs-eight cpoint">Loading leagues...</span>
+                                            </li>
+                                        )}
+                                        {!isLoading && error && (
+                                            <li>
+                                                <span className="fs-eight cpoint">Leagues unavailable</span>
+                                            </li>
+                                        )}
+                                        {!isLoading && !error && footballSport.leagues.length === 0 && (
+                                            <li>
+                                                <span className="fs-eight cpoint">No leagues available</span>
+                                            </li>
+                                        )}
+                                        {!isLoading && !error && filteredLeagues.map((league) => (
+                                            <li
+                                                className={selectedLeague === league.name ? "is-active" : ""}
+                                                key={league.id}
+                                            >
+                                                <Link href={`/soccer?league=${encodeURIComponent(league.name)}`}>
+                                                    <span className="sportsbook-sidebar-league-name">
+                                                        <span className="sportsbook-sidebar-league-dot" />
+                                                        {league.name}
+                                                    </span>
+                                                    <span className="sportsbook-sidebar-league-count">
+                                                        {league.fixtureCount}
+                                                    </span>
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </li>
+                            )}
+                        </Fragment>
+                    )
+                })}
             </ul>
         </>
     )

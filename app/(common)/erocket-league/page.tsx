@@ -1,13 +1,7 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopErocketLeague from '@/components/Pages/ErocketLeague/TopErocketLeague';
-import UpCmingErocketLeague from '@/components/Pages/ErocketLeague/UpCmingErocketLeague';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopErocketLeague />
-            <UpCmingErocketLeague />
-        </>
-    )
+export default function Page() {
+  return (
+    <PrematchSportPage sportId="erocket-league" sportName="eRocket League" />
+  );
 }

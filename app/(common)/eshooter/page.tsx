@@ -1,13 +1,5 @@
-import HeaderMain from '@/components/Shared/HeaderMain';
-import TopEshooter from '@/components/Pages/Eshooter/TopEshooter';
-import UpCmingEshooter from '@/components/Pages/Eshooter/UpCmingEshooter';
+import PrematchSportPage from "@/components/Prematch/PrematchSportPage";
 
-export default function page() {
-    return (
-        <>
-            <HeaderMain />
-            <TopEshooter />
-            <UpCmingEshooter />
-        </>
-    )
+export default function Page() {
+  return <PrematchSportPage sportId="eshooter" sportName="eShooter" />;
 }

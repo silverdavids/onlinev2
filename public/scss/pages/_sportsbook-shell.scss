@@ -1,0 +1,860 @@
+.sportsbook-app {
+  --site-header-height: 112px;
+  --site-sidebar-width: 284px;
+  --site-content-offset: 303px;
+  --sportsbook-betslip-width: 360px;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.sportsbook-app .header-section2 {
+  left: 0;
+  right: 0;
+  width: auto;
+}
+
+.sportsbook-app .header-section2 .navbar {
+  width: auto;
+  margin-left: var(--site-content-offset);
+  margin-right: 0;
+}
+
+.sportsbook-app .left-nav-area {
+  left: 0;
+  top: 0;
+  width: var(--site-sidebar-width);
+}
+
+.sportsbook-app .left-nav-area .logo-area {
+  left: 0;
+  width: var(--site-sidebar-width);
+  z-index: 5;
+  background: rgba(var(--p2), 1);
+  border-bottom: 1px solid var(--brt1);
+}
+
+.sportsbook-app .nav_aside {
+  height: 100vh;
+  max-height: 100vh;
+  padding-top: var(--site-header-height) !important;
+}
+
+.sportsbook-sport-link {
+  min-width: 0;
+}
+
+.sportsbook-sidebar-leagues {
+  cursor: default !important;
+  padding: 4px 0 8px 28px;
+
+  &:hover {
+    background-color: transparent !important;
+  }
+}
+
+.sportsbook-sidebar-league-search {
+  width: 100%;
+  border: 1px solid var(--brt1);
+  border-radius: 6px;
+  background: rgba(var(--p3), 1);
+  color: rgba(var(--n4), 1);
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 9px 12px;
+  margin: 0 0 10px;
+  outline: 0;
+
+  &:focus {
+    border-color: rgba(53, 195, 30, 0.65);
+    box-shadow: 0 0 0 2px rgba(53, 195, 30, 0.12);
+  }
+}
+
+.sportsbook-sidebar-league-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
+  padding: 0 4px 0 0;
+  margin: 0;
+  list-style: none;
+
+  li {
+    border-radius: 8px;
+
+    &.is-active {
+      background-color: rgba(var(--n11), 0.92);
+
+      a,
+      li > span {
+        border-color: rgba(53, 195, 30, 0.45);
+      }
+
+      .sportsbook-sidebar-league-dot {
+        background: rgb(var(--g1));
+        box-shadow: 0 0 0 3px rgba(53, 195, 30, 0.14);
+      }
+    }
+  }
+
+  a,
+  li > span {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: rgba(var(--p3), 0.42);
+    color: rgba(var(--n4), 1);
+    font-size: 12.5px;
+    line-height: 1.25;
+    padding: 9px 10px;
+    transition:
+      background 0.18s linear,
+      border-color 0.18s linear;
+
+    &:hover {
+      border-color: rgba(var(--brt1), 1);
+      background: rgba(var(--n11), 0.65);
+    }
+  }
+
+  .sportsbook-sidebar-league-name {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .sportsbook-sidebar-league-dot {
+    flex: 0 0 6px;
+    width: 6px;
+    height: 6px;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: rgba(var(--n5), 0.6);
+  }
+
+  .sportsbook-sidebar-league-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    border-radius: 999px;
+    background: rgba(15, 27, 66, 0.68);
+    color: rgba(var(--n5), 1);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    padding: 3px 7px;
+  }
+}
+
+.sportsbook-league-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--brt1);
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(var(--n5), 1);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sportsbook-shell {
+  width: calc(100% - var(--site-content-offset));
+  min-height: calc(100vh - var(--site-header-height));
+  margin-left: var(--site-content-offset);
+  padding-top: var(--site-header-height);
+  min-width: 0;
+  max-width: none;
+}
+
+.sportsbook-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: calc(100vh - var(--site-header-height));
+
+  .hero_area__main,
+  .top_matches__main {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .top_matches__main {
+    margin-top: 0;
+  }
+
+  .container,
+  .container-fluid {
+    max-width: none;
+  }
+}
+
+.sportsbook-main > footer {
+  min-width: 0;
+  margin-top: 0;
+}
+
+.smartbet-home {
+  min-width: 0;
+  padding: 28px;
+  overflow: hidden;
+}
+
+.featured-matches-slider {
+  position: relative;
+  min-width: 0;
+  margin: 0 0 48px;
+  overflow: hidden;
+}
+
+.featured-carousel__viewport {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+
+  .swiper-wrapper {
+    align-items: stretch;
+    transition-timing-function: ease;
+  }
+}
+
+.featured-carousel__viewport .featured-carousel__slide {
+  display: flex;
+  width: 404px;
+  height: auto;
+}
+
+.featured-match-card {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 380px;
+  min-width: 0;
+  height: 230px;
+  border: 4px solid rgb(var(--p3));
+  border-radius: 8px;
+  background: rgba(var(--p2), 1);
+  padding: 24px;
+  transition: border-color 0.2s linear;
+
+  &:hover {
+    border-color: rgba(53, 195, 30, 0.5);
+  }
+}
+
+.featured-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(var(--brt1), 1);
+  border-radius: 50%;
+  background: rgba(var(--p3), 0.94);
+  color: rgba(var(--n4), 1);
+  font-size: 24px;
+  line-height: 1;
+  transform: translateY(-50%);
+  transition:
+    background 0.2s linear,
+    border-color 0.2s linear;
+
+  &:hover {
+    border-color: rgba(53, 195, 30, 0.65);
+    background: rgba(var(--n11), 0.98);
+  }
+}
+
+.featured-carousel__arrow--prev {
+  left: 4px;
+  transform: translate(-50%, -50%);
+}
+
+.featured-carousel__arrow--next {
+  right: 4px;
+  transform: translate(50%, -50%);
+}
+
+.featured-match-card__top,
+.featured-match-card__body,
+.featured-match-card__footer,
+.featured-match-card__league {
+  display: flex;
+  min-width: 0;
+}
+
+.featured-match-card__top {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: rgba(var(--n5), 1);
+  font-size: 14px;
+}
+
+.featured-match-card__league {
+  align-items: center;
+  gap: 8px;
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  svg {
+    flex: 0 0 auto;
+  }
+}
+
+.featured-match-card__date {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.featured-match-card__body {
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.featured-match-card__team {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+
+  h6 {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.featured-match-card__team--away {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.featured-match-card__crest {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+  background-color: rgba(var(--n11), 1);
+}
+
+.featured-match-card__vs {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgb(var(--n2));
+  color: rgba(var(--n5), 1);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.featured-match-card__footer {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.featured-match-card__odd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(var(--p3), 1);
+  color: rgba(var(--n4), 1);
+  padding: 9px 10px;
+  cursor: pointer;
+  transition: background 0.2s linear;
+
+  &:hover,
+  &[data-selected="true"] {
+    background: rgba(53, 195, 30, 0.5);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  span {
+    color: rgba(var(--n5), 1);
+    font-size: 13px;
+  }
+
+  strong {
+    font-size: 13px;
+  }
+}
+
+.game-categories {
+  min-width: 0;
+  margin-bottom: 24px;
+}
+
+.game-categories__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-width: 0;
+  margin-bottom: 24px;
+}
+
+.game-categories__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgb(var(--p3));
+  border-radius: 17px;
+  background: rgba(var(--p3), 1);
+  color: rgba(var(--n4), 1);
+  padding: 8px 16px;
+  transition: border-color 0.2s linear;
+
+  &:hover,
+  &[data-active="true"] {
+    border-color: rgb(var(--g1));
+  }
+}
+
+.smartbet-home .top_matches {
+  padding-bottom: 48px;
+}
+
+.smartbet-home .top_matches__main {
+  margin-top: 0;
+}
+
+.smartbet-home .top_matches .container-fluid,
+.smartbet-home .top_matches .row,
+.smartbet-home .top_matches .col-12 {
+  min-width: 0;
+}
+
+.smartbet-home .top_matches .container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sportsbook-betslip {
+  pointer-events: none;
+
+  .fixed_footer {
+    pointer-events: auto;
+    right: 24px;
+    bottom: auto;
+    top: calc(var(--site-header-height) + 16px);
+    width: min(var(--sportsbook-betslip-width), calc(100vw - var(--site-content-offset) - 40px));
+    max-height: calc(100vh - var(--site-header-height) - 32px);
+    z-index: 9999;
+    border: 1px solid var(--brt1);
+    overflow: hidden;
+  }
+
+  .fixed_footer.expanded2 {
+    top: auto;
+    bottom: 0;
+    transform: translateY(calc(100% - 58px));
+  }
+
+  .fixed_footer.expandedtexta,
+  .fixed_footer.is-open {
+    transform: translateY(0);
+  }
+
+  .fixed_footer__head {
+    cursor: pointer;
+    z-index: 2;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .fixed_footer__content {
+    display: block;
+    max-height: calc(100vh - var(--site-header-height) - 98px);
+    overflow-y: auto;
+  }
+
+  .fixed_footer__content-live {
+    margin-bottom: 0 !important;
+  }
+
+  .footfixedbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+  }
+}
+
+.sportsbook-betslip-empty {
+  border: 1px dashed rgba(var(--n5), 0.35);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.prematch-fixture-preview {
+  display: grid;
+  grid-template-columns: minmax(220px, 32%) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.prematch-fixture-preview__identity,
+.prematch-fixture-preview__markets,
+.prematch-fixture-preview__team-list,
+.prematch-fixture-preview__market {
+  min-width: 0;
+}
+
+.prematch-fixture-preview__meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.prematch-fixture-preview__league,
+.prematch-fixture-preview__team {
+  min-width: 0;
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.prematch-fixture-preview__league span {
+  white-space: nowrap;
+}
+
+.prematch-fixture-preview__team span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.prematch-fixture-preview__time {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: max-content;
+}
+
+.prematch-fixture-preview__teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding-right: 0;
+}
+
+.prematch-fixture-preview__icons {
+  flex: 0 0 auto;
+}
+
+.prematch-fixture-preview__market-title {
+  border-bottom: 1px solid #2c3655;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.prematch-fixture-preview__market-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  min-width: 0;
+}
+
+.prematch-fixture-preview__selection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.prematch-preview-selection {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.prematch-preview-selection__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prematch-preview-selection__odd {
+  min-width: 0;
+}
+
+.prematch-fixture-preview__empty {
+  padding: 14px 16px;
+}
+
+@media (max-width: 1366px) and (min-width: 1024px) {
+  .sportsbook-app {
+    --sportsbook-betslip-width: 340px;
+  }
+
+  .smartbet-home {
+    padding: 24px;
+  }
+
+  .featured-carousel__viewport .featured-carousel__slide {
+    width: 370px;
+  }
+
+  .featured-match-card {
+    width: 350px;
+  }
+
+  .featured-match-card {
+    height: 220px;
+    padding: 20px;
+  }
+
+  .prematch-fixture-preview {
+    grid-template-columns: minmax(190px, 30%) minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .prematch-fixture-preview__selection-grid {
+    gap: 6px;
+  }
+
+  .prematch-preview-selection {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+
+@media (max-width: 1199px) {
+  .prematch-fixture-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .prematch-fixture-preview__market-list {
+    grid-template-columns: 1fr;
+  }
+
+  .prematch-fixture-preview__league span {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 1023px) {
+  .sportsbook-app {
+    --site-header-height: 80px;
+    --site-sidebar-width: 0px;
+    --site-content-offset: 0px;
+  }
+
+  .sportsbook-app .header-section2 .navbar {
+    margin-left: 95px;
+  }
+
+  .sportsbook-shell {
+    display: block;
+    width: 100%;
+    margin-left: 0;
+    padding-top: var(--site-header-height);
+  }
+
+  .smartbet-home {
+    padding: 20px 16px;
+  }
+
+  .featured-matches-slider {
+    margin-bottom: 36px;
+  }
+
+  .featured-carousel__viewport .featured-carousel__slide {
+    width: min(356px, 90vw);
+  }
+
+  .featured-match-card {
+    width: min(340px, 86vw);
+  }
+
+  .featured-match-card {
+    height: 216px;
+    padding: 18px;
+  }
+
+  .featured-carousel__arrow {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+  }
+
+  .featured-carousel__arrow--prev {
+    left: 2px;
+  }
+
+  .featured-carousel__arrow--next {
+    right: 2px;
+  }
+
+  .game-categories__list {
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .game-categories__link {
+    flex: 0 0 auto;
+  }
+
+  .sportsbook-main {
+    min-height: calc(100vh - var(--site-header-height));
+
+    .hero_area__main,
+    .top_matches__main {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
+  .sportsbook-sidebar-leagues {
+    padding-left: 20px;
+  }
+
+  .sportsbook-sidebar-league-list {
+    max-height: min(56vh, 440px);
+  }
+
+  .prematch-fixture-preview__selection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sportsbook-betslip {
+    pointer-events: none;
+
+    .fixed_footer {
+      pointer-events: auto;
+      position: fixed;
+      right: 12px;
+      bottom: 0;
+      top: auto;
+      width: min(420px, calc(100vw - 24px));
+      z-index: 9999;
+      border: 1px solid var(--brt1);
+      transform: translateY(calc(100% - 58px));
+      transition: transform 0.25s ease;
+    }
+
+    .fixed_footer.is-open {
+      transform: translateY(0);
+    }
+
+    .fixed_footer__head {
+      border-radius: 12px 12px 0 0;
+    }
+
+    .fixed_footer__content {
+      display: block;
+      max-height: min(70vh, 560px);
+      overflow-y: auto;
+    }
+
+    .fixed_footer__content-live {
+      margin-bottom: 0 !important;
+    }
+
+    .footfixedbtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      background: transparent;
+    }
+  }
+}
+
+@media (max-width: 575px) {
+  .smartbet-home {
+    padding: 16px 12px;
+  }
+
+  .featured-carousel__viewport .featured-carousel__slide {
+    width: min(330px, 90vw);
+  }
+
+  .featured-match-card {
+    width: min(316px, 86vw);
+  }
+
+  .featured-match-card {
+    height: 212px;
+    padding: 16px;
+  }
+
+  .featured-match-card__top {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .featured-match-card__footer {
+    gap: 8px;
+  }
+
+  .featured-match-card__odd {
+    gap: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .prematch-fixture-preview__selection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .prematch-preview-selection {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .prematch-preview-selection__label {
+    font-size: 11px;
+  }
+}
