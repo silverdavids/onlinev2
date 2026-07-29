@@ -72,3 +72,5 @@ Selections are refreshed against the latest active feed. Missing selections beco
 3. If `MatchOddId` is supplied when present, should WebUI treat it only as an optional lookup acceleration and always fall back to match/market/option/line?
 4. How should SmartBetUI-v2 obtain the current `SetNo` for prematch receipt creation?
 5. Is anonymous booking creation through `/api/Ticket/Booking` intended to remain public?
+
+See `docs/PREMATCH_TICKET_SUBMISSION_CONTRACT.md` for the follow-up contract verification. The release-target runtime sample proves `OriginalMatchId` maps to WebUI `BetServiceMatchNo`; real submission remains disabled until the Phase 4 adapter is implemented and tested against the release-aligned API, including the remaining `MatchOddId` validator inconsistency.
