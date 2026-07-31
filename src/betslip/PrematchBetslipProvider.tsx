@@ -156,6 +156,11 @@ const buildSelectionKey = (selection: PrematchSelection): string =>
     selection.bookmakerId ?? "",
   ].join("|");
 
+const getFixtureMatchId = (fixture: PrematchFixture): number | null =>
+  toPositiveInteger(fixture.originalMatchId) ??
+  toPositiveInteger(fixture.betServiceMatchNo) ??
+  toPositiveInteger(fixture.matchId);
+
 const safeStoredSelection = (
   value: unknown
 ): SelectedPrematchSelection | null => {
@@ -168,6 +173,36 @@ const safeStoredSelection = (
   if (!key || odd === null) return null;
 
   return value as SelectedPrematchSelection;
+};
+
+const normalizeSelectionsByFixture = (
+  selections: Record<string, SelectedPrematchSelection>
+): Record<string, SelectedPrematchSelection> => {
+  const groupedByMatchId = new Map<string, [string, SelectedPrematchSelection]>();
+  const next: Record<string, SelectedPrematchSelection> = {};
+
+  Object.entries(selections).forEach(([key, selection]) => {
+    const matchId = selection.operational.matchId;
+    if (!matchId) {
+      next[key] = selection;
+      return;
+    }
+
+    const matchKey = String(matchId);
+    const current = groupedByMatchId.get(matchKey);
+    if (
+      !current ||
+      Date.parse(selection.selectedAt) >= Date.parse(current[1].selectedAt)
+    ) {
+      groupedByMatchId.set(matchKey, [key, selection]);
+    }
+  });
+
+  groupedByMatchId.forEach(([key, selection]) => {
+    next[key] = selection;
+  });
+
+  return next;
 };
 
 const loadPersistedBetslip = (): PersistedBetslip | null => {
@@ -188,7 +223,7 @@ const loadPersistedBetslip = (): PersistedBetslip | null => {
     }, {});
 
     return {
-      selectedByKey,
+      selectedByKey: normalizeSelectionsByFixture(selectedByKey),
       stakeInput:
         typeof parsed.stakeInput === "string"
           ? normalizeStakeInput(parsed.stakeInput)
@@ -206,7 +241,7 @@ const createSelection = (
   selectionName?: string
 ): SelectedPrematchSelection => {
   const key = buildSelectionKey(selection);
-  const matchId = toPositiveInteger(fixture.originalMatchId);
+  const matchId = getFixtureMatchId(fixture);
   const bookmakerId = toPositiveInteger(selection.bookmakerId) ?? 0;
   const shortCode =
     toPositiveInteger(fixture.shortCode) ??
@@ -477,7 +512,17 @@ export const PrematchBetslipProvider = ({
       selectionName?: string
     ) => {
       const key = buildSelectionKey(selection);
+      const fixtureMatchId = getFixtureMatchId(fixture);
       setServerMessage(null);
+      setChangedOdds((current) =>
+        current.filter((change) => {
+          if (change.key === key) return false;
+          if (fixtureMatchId !== null && change.matchId === fixtureMatchId) {
+            return false;
+          }
+          return true;
+        })
+      );
       setSelectedByKey((current) => {
         if (current[key]) {
           const next = { ...current };
@@ -485,14 +530,29 @@ export const PrematchBetslipProvider = ({
           return next;
         }
 
+        const next = Object.entries(current).reduce<
+          Record<string, SelectedPrematchSelection>
+        >((result, [existingKey, existing]) => {
+          if (
+            fixtureMatchId !== null &&
+            existing.operational.matchId === fixtureMatchId
+          ) {
+            return result;
+          }
+
+          result[existingKey] = existing;
+          return result;
+        }, {});
+
+        next[key] = createSelection(
+          fixture,
+          selection,
+          marketName,
+          selectionName
+        );
+
         return {
-          ...current,
-          [key]: createSelection(
-            fixture,
-            selection,
-            marketName,
-            selectionName
-          ),
+          ...next,
         };
       });
     },
