@@ -60,6 +60,11 @@ export default function SideNav() {
                             fill="#BDC2D1" />
                     </svg> In-Play</Link>
                 </li>
+                <li className="active">
+                    <Link href="/tickets" className="d-flex align-items-center gap-2"><i
+                        className="ti ti-ticket n5-color fs-five"></i>
+                        Tickets</Link>
+                </li>
             </ul>
             <hr className="py-0 my-0" />
             <h5 className="mb-4 mb-md-6 mt-4 mt-md-6">Categories</h5>

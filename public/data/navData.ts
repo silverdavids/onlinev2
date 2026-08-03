@@ -180,8 +180,8 @@ export const naviTemData = [
   },
   {
     id: 151272,
-    linkText: "Highlights",
-    href: "/soccer",
+    linkText: "Tickets",
+    href: "/tickets",
   },
   {
     id: 155534,
