@@ -10,12 +10,12 @@ export type PrematchTicketBetRequest = {
   Odd: number;
   OptionId: number | null;
   ShortCode: number;
-  IsLive: false;
-  Period: 0;
-  BetMinute: 0;
-  Scores: null;
-  HomeScore: 0;
-  AwayScore: 0;
+  IsLive: boolean;
+  Period: number;
+  BetMinute: number;
+  Scores: string | null;
+  HomeScore: number;
+  AwayScore: number;
 };
 
 export type PrematchTicketRequest = {
@@ -25,7 +25,7 @@ export type PrematchTicketRequest = {
   TotalOdd: number;
   TotalStake: number;
   BookingCode: number;
-  IsLive: false;
+  IsLive: boolean;
   BonusId: 0;
   PaymentSource: null;
   PaymentReference: null;

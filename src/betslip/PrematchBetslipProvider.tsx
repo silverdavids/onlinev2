@@ -20,6 +20,11 @@ import type {
   PrematchSelection,
 } from "@/src/domain/prematch";
 import type {
+  LiveMatch,
+  LiveMarket,
+  LiveOddOption,
+} from "@/src/domain/live";
+import type {
   BookingLookupDto,
   BookingSelectionDto,
   PrematchTicketRequest,
@@ -33,6 +38,7 @@ const STORAGE_KEY = "smartbet.prematchBetslip.v1";
 const BOOKING_EXPIRY_MINUTES = 30;
 
 export type BetslipSelectionStatus = "active" | "suspended";
+export type BetslipSelectionKind = "prematch" | "live";
 
 export type SelectedPrematchSelection = {
   key: string;
@@ -47,6 +53,7 @@ export type SelectedPrematchSelection = {
     matchOddId: string | null;
   };
   operational: {
+    kind?: BetslipSelectionKind;
     matchId: number | null;
     setNo?: number | null;
     betCategory: string;
@@ -55,6 +62,15 @@ export type SelectedPrematchSelection = {
     odd: number;
     bookmakerId: number;
     shortCode: number;
+    matchOddId?: number | null;
+    optionId?: number | null;
+    isLive?: boolean;
+    period?: number;
+    betMinute?: number;
+    scores?: string | null;
+    homeScore?: number;
+    awayScore?: number;
+    eventStateId?: string | null;
   };
   previousOdd: number | null;
   selectedAt: string;
@@ -121,6 +137,12 @@ type PrematchBetslipContextValue = {
     marketName: string,
     selectionName?: string
   ) => void;
+  toggleLiveSelection: (
+    match: LiveMatch,
+    market: LiveMarket,
+    option: LiveOddOption
+  ) => void;
+  syncLiveSelections: (matches: LiveMatch[]) => void;
   removeSelection: (key: string) => void;
   removeSuspendedSelections: () => void;
   clearSelections: () => void;
@@ -171,6 +193,9 @@ const roundMoney = (value: number): number => Math.round(value * 100) / 100;
 
 const roundOdds = (value: number): number => Math.round(value * 100) / 100;
 
+const oddsEqual = (left: number, right: number): boolean =>
+  roundOdds(left) === roundOdds(right);
+
 const buildSelectionKey = (selection: PrematchSelection): string =>
   selection.matchOddId ||
   [
@@ -180,10 +205,30 @@ const buildSelectionKey = (selection: PrematchSelection): string =>
     selection.bookmakerId ?? "",
   ].join("|");
 
+const buildLiveSelectionKey = (
+  match: LiveMatch,
+  market: LiveMarket,
+  option: LiveOddOption
+): string =>
+  option.matchOddId ||
+  [
+    "live",
+    match.matchId,
+    market.name,
+    option.name,
+    market.line ?? "",
+  ].join("|");
+
 const getFixtureMatchId = (fixture: PrematchFixture): number | null =>
   toPositiveInteger(fixture.originalMatchId) ??
   toPositiveInteger(fixture.betServiceMatchNo) ??
   toPositiveInteger(fixture.matchId);
+
+const getSetNoFromMatches = (matches: PrematchFixture[]): number =>
+  matches
+    .map((match) => toPositiveInteger(match.setNo))
+    .find((setNo): setNo is number => typeof setNo === "number" && setNo > 0) ??
+  0;
 
 const safeStoredSelection = (
   value: unknown
@@ -286,6 +331,7 @@ const createSelection = (
       matchOddId: selection.matchOddId,
     },
     operational: {
+      kind: "prematch",
       matchId,
       setNo: toPositiveInteger(fixture.setNo),
       betCategory: selection.betCategory,
@@ -294,11 +340,72 @@ const createSelection = (
       odd: selection.odd,
       bookmakerId,
       shortCode,
+      matchOddId: toNullablePositiveInteger(selection.matchOddId),
+      optionId: null,
+      isLive: false,
+      period: 0,
+      betMinute: 0,
+      scores: null,
+      homeScore: 0,
+      awayScore: 0,
     },
     previousOdd: null,
     selectedAt: new Date().toISOString(),
     status: "active",
     statusMessage: null,
+  };
+};
+
+const createLiveSelection = (
+  match: LiveMatch,
+  market: LiveMarket,
+  option: LiveOddOption
+): SelectedPrematchSelection => {
+  const key = buildLiveSelectionKey(match, market, option);
+
+  return {
+    key,
+    display: {
+      league: match.league,
+      homeTeamName: match.homeTeam,
+      awayTeamName: match.awayTeam,
+      kickoff: match.matchTime
+        ? `${match.matchTime} live`
+        : match.minute > 0
+          ? `${match.minute}' live`
+          : "Live",
+      marketName: market.line ? `${market.name} ${market.line}` : market.name,
+      selectionName: option.name,
+      matchNo: match.shortCode ? String(match.shortCode) : null,
+      matchOddId: option.matchOddId,
+    },
+    operational: {
+      kind: "live",
+      matchId: toPositiveInteger(match.matchId),
+      setNo: 0,
+      betCategory: market.name,
+      betOption: option.name,
+      line: market.line,
+      odd: option.odd,
+      bookmakerId: match.bookmakerId,
+      shortCode: match.shortCode,
+      matchOddId: toNullablePositiveInteger(option.matchOddId),
+      optionId: option.optionId,
+      isLive: true,
+      period: match.period,
+      betMinute: match.minute,
+      scores: `${match.homeScore} : ${match.awayScore}`,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+      eventStateId: match.eventStateId,
+    },
+    previousOdd: option.previousOdd,
+    selectedAt: new Date().toISOString(),
+    status: match.blocked || market.blocked || option.blocked ? "suspended" : "active",
+    statusMessage:
+      match.blocked || market.blocked || option.blocked
+        ? "This live selection is currently suspended."
+        : null,
   };
 };
 
@@ -358,12 +465,15 @@ const createTicketRequest = (
   selections: SelectedPrematchSelection[],
   stake: number,
   totalOdds: number,
-  bookingCode = 0
+  bookingCode = 0,
+  fallbackSetNo = 0
 ): PrematchTicketRequest => {
+  const isLiveSlip = selections.some((selection) => selection.operational.isLive);
   const setNo =
     selections
       .map((selection) => selection.operational.setNo)
-      .find((value): value is number => typeof value === "number" && value > 0) ?? 0;
+      .find((value): value is number => typeof value === "number" && value > 0) ??
+    fallbackSetNo;
 
   return {
     BetData: selections.map((selection) => ({
@@ -372,23 +482,25 @@ const createTicketRequest = (
     BookMakerId: selection.operational.bookmakerId,
     Line: selection.operational.line,
     MatchId: selection.operational.matchId ?? 0,
-    MatchOddId: toNullablePositiveInteger(selection.display.matchOddId),
+    MatchOddId:
+      selection.operational.matchOddId ??
+      toNullablePositiveInteger(selection.display.matchOddId),
     Odd: selection.operational.odd,
-    OptionId: null,
+    OptionId: selection.operational.optionId ?? null,
     ShortCode: selection.operational.shortCode,
-    IsLive: false,
-    Period: 0,
-    BetMinute: 0,
-    Scores: null,
-    HomeScore: 0,
-    AwayScore: 0,
+    IsLive: selection.operational.isLive === true,
+    Period: selection.operational.period ?? 0,
+    BetMinute: selection.operational.betMinute ?? 0,
+    Scores: selection.operational.scores ?? null,
+    HomeScore: selection.operational.homeScore ?? 0,
+    AwayScore: selection.operational.awayScore ?? 0,
   })),
   SetNo: setNo,
   TotalBonus: 0,
   TotalOdd: totalOdds,
   TotalStake: Math.trunc(stake),
   BookingCode: bookingCode,
-  IsLive: false,
+  IsLive: isLiveSlip,
   BonusId: 0,
   PaymentSource: null,
   PaymentReference: null,
@@ -852,6 +964,10 @@ export const PrematchBetslipProvider = ({
   const activeSelectionsByKey = useMemo(() => {
     return buildActiveSelectionLookup(matches);
   }, [matches]);
+  const currentSetNo = useMemo(
+    () => getSetNoFromMatches(matches),
+    [matches]
+  );
 
   useEffect(() => {
     setSelectedByKey((current) => {
@@ -859,6 +975,8 @@ export const PrematchBetslipProvider = ({
       const next = { ...current };
 
       Object.entries(next).forEach(([key, existing]) => {
+        if (existing.operational.isLive) return;
+
         const activeSelection = activeSelectionsByKey.get(key);
 
         if (!activeSelection) {
@@ -951,6 +1069,13 @@ export const PrematchBetslipProvider = ({
 
     if (selections.some((selection) => selection.status === "suspended")) {
       messages.push("Remove suspended selections before continuing.");
+    }
+
+    if (
+      selections.some((selection) => selection.operational.isLive) &&
+      selections.some((selection) => !selection.operational.isLive)
+    ) {
+      messages.push("Live and prematch selections must be placed separately.");
     }
 
     if (stake === null || stake <= 0) {
@@ -1109,6 +1234,187 @@ export const PrematchBetslipProvider = ({
     []
   );
 
+  const toggleLiveSelection = useCallback(
+    (match: LiveMatch, market: LiveMarket, option: LiveOddOption) => {
+      const key = buildLiveSelectionKey(match, market, option);
+      const matchId = toPositiveInteger(match.matchId);
+      setServerMessage(null);
+      setReceipt(null);
+      setBookingConfirmation(null);
+      setLoadedBookingCode(null);
+      setChangedOdds((current) =>
+        current.filter((change) => {
+          if (change.key === key) return false;
+          if (matchId !== null && change.matchId === matchId) return false;
+          return true;
+        })
+      );
+      setSelectedByKey((current) => {
+        if (current[key]) {
+          const next = { ...current };
+          delete next[key];
+          return next;
+        }
+
+        const next = Object.entries(current).reduce<
+          Record<string, SelectedPrematchSelection>
+        >((result, [existingKey, existing]) => {
+          if (matchId !== null && existing.operational.matchId === matchId) {
+            return result;
+          }
+
+          result[existingKey] = existing;
+          return result;
+        }, {});
+
+        next[key] = createLiveSelection(match, market, option);
+        return next;
+      });
+    },
+    []
+  );
+
+  const syncLiveSelections = useCallback((liveMatches: LiveMatch[]) => {
+    setSelectedByKey((current) => {
+      let changed = false;
+      const next = { ...current };
+
+      Object.entries(next).forEach(([key, existing]) => {
+        if (!existing.operational.isLive || !existing.operational.matchId) return;
+
+        const match = liveMatches.find(
+          (candidate) =>
+            toPositiveInteger(candidate.matchId) === existing.operational.matchId
+        );
+        if (!match) {
+          if (existing.status !== "suspended") {
+            next[key] = {
+              ...existing,
+              status: "suspended",
+              statusMessage: "This live match is no longer available.",
+            };
+            changed = true;
+          }
+          return;
+        }
+
+        const market = match.markets.find(
+          (candidate) =>
+            candidate.name === existing.operational.betCategory &&
+            String(candidate.line ?? "") === String(existing.operational.line ?? "")
+        );
+        const option = market?.options.find(
+          (candidate) => candidate.name === existing.operational.betOption
+        );
+
+        if (!market || !option) {
+          if (existing.status !== "suspended") {
+            next[key] = {
+              ...existing,
+              display: {
+                ...existing.display,
+                kickoff: match.matchTime
+                  ? `${match.matchTime} live`
+                  : match.minute > 0
+                    ? `${match.minute}' live`
+                    : "Live",
+              },
+              operational: {
+                ...existing.operational,
+                period: match.period,
+                betMinute: match.minute,
+                scores: `${match.homeScore} : ${match.awayScore}`,
+                homeScore: match.homeScore,
+                awayScore: match.awayScore,
+                eventStateId: match.eventStateId,
+              },
+              status: "suspended",
+              statusMessage: "This live odd is no longer available.",
+            };
+            changed = true;
+          }
+          return;
+        }
+
+        const suspended = match.blocked || market.blocked || option.blocked;
+        const oddsChanged = !oddsEqual(existing.operational.odd, option.odd);
+        if (
+          oddsChanged ||
+          existing.operational.bookmakerId !== match.bookmakerId ||
+          existing.operational.shortCode !== match.shortCode ||
+          existing.operational.period !== match.period ||
+          existing.operational.betMinute !== match.minute ||
+          existing.operational.scores !== `${match.homeScore} : ${match.awayScore}` ||
+          existing.status !== (suspended ? "suspended" : "active")
+        ) {
+          if (oddsChanged) {
+            setChangedOdds((currentChanges) => {
+              const withoutCurrent = currentChanges.filter(
+                (change) => change.key !== key
+              );
+              return [
+                ...withoutCurrent,
+                {
+                  key,
+                  matchId: existing.operational.matchId,
+                  matchOddId: toNullablePositiveInteger(option.matchOddId),
+                  market: existing.operational.betCategory,
+                  option: existing.operational.betOption,
+                  line: existing.operational.line,
+                  oldOdd: existing.operational.odd,
+                  newOdd: option.odd,
+                  message: "Live odds changed.",
+                },
+              ];
+            });
+          }
+
+          next[key] = {
+            ...existing,
+            display: {
+              ...existing.display,
+              league: match.league,
+              homeTeamName: match.homeTeam,
+              awayTeamName: match.awayTeam,
+              kickoff: match.matchTime
+                ? `${match.matchTime} live`
+                : match.minute > 0
+                  ? `${match.minute}' live`
+                  : "Live",
+              matchNo: match.shortCode ? String(match.shortCode) : null,
+              matchOddId: option.matchOddId,
+            },
+            operational: {
+              ...existing.operational,
+              odd: oddsChanged ? existing.operational.odd : option.odd,
+              bookmakerId: match.bookmakerId,
+              shortCode: match.shortCode,
+              matchOddId: toNullablePositiveInteger(option.matchOddId),
+              optionId: option.optionId,
+              period: match.period,
+              betMinute: match.minute,
+              scores: `${match.homeScore} : ${match.awayScore}`,
+              homeScore: match.homeScore,
+              awayScore: match.awayScore,
+              eventStateId: match.eventStateId,
+            },
+            previousOdd:
+              oddsChanged
+                ? existing.operational.odd
+                : existing.previousOdd,
+            status: suspended ? "suspended" : "active",
+            statusMessage: suspended
+              ? "This live selection is currently suspended."
+              : null,
+          };
+          changed = true;
+        }
+      });
+
+      return changed ? next : current;
+    });
+  }, []);
+
   const bookTicket = useCallback(async () => {
     if (isBooking) return;
 
@@ -1123,31 +1429,47 @@ export const PrematchBetslipProvider = ({
     setBookingConfirmation(null);
 
     try {
-      const refreshedMatches = await refresh();
-      const refreshedSelectionsByKey = buildActiveSelectionLookup(refreshedMatches);
-      const unavailableSelections = Object.values(selectedByKey).filter(
-        (selection) => !refreshedSelectionsByKey.has(selection.key)
-      );
-      if (unavailableSelections.length > 0) {
-        setSelectedByKey((current) =>
-          markUnavailableSelections(current, refreshedSelectionsByKey)
-        );
-        setServerMessage("Remove suspended selections before booking this slip.");
-        return;
-      }
-
-      const feedChangedOdds = getFeedChangedOdds(
-        selectedByKey,
-        refreshedSelectionsByKey
-      );
-      if (feedChangedOdds.length > 0) {
-        setChangedOdds(feedChangedOdds);
-        setServerMessage("Odds changed. Review and accept the new odds before booking.");
-        return;
-      }
-
       const currentSelections = Object.values(selectedByKey);
-      const request = createTicketRequest(currentSelections, stake, totalOdds);
+      const hasLiveSelections = currentSelections.some(
+        (selection) => selection.operational.isLive
+      );
+      let requestSetNo = currentSetNo;
+
+      if (!hasLiveSelections) {
+        const refreshedMatches = await refresh();
+        requestSetNo = getSetNoFromMatches(refreshedMatches);
+        const refreshedSelectionsByKey = buildActiveSelectionLookup(refreshedMatches);
+        const unavailableSelections = currentSelections.filter(
+          (selection) => !refreshedSelectionsByKey.has(selection.key)
+        );
+        if (unavailableSelections.length > 0) {
+          setSelectedByKey((current) =>
+            markUnavailableSelections(current, refreshedSelectionsByKey)
+          );
+          setServerMessage("Remove suspended selections before booking this slip.");
+          return;
+        }
+
+        const feedChangedOdds = getFeedChangedOdds(
+          selectedByKey,
+          refreshedSelectionsByKey
+        );
+        if (feedChangedOdds.length > 0) {
+          setChangedOdds(feedChangedOdds);
+          setServerMessage("Odds changed. Review and accept the new odds before booking.");
+          return;
+        }
+      } else if (requestSetNo <= 0) {
+        requestSetNo = getSetNoFromMatches(await refresh());
+      }
+
+      const request = createTicketRequest(
+        currentSelections,
+        stake,
+        totalOdds,
+        0,
+        requestSetNo
+      );
       const result = await prematchTicketApi.createBooking(request);
 
       const resultChangedOdds = mapChangedOdds(
@@ -1239,6 +1561,7 @@ export const PrematchBetslipProvider = ({
     selectedByKey,
     stake,
     totalOdds,
+    currentSetNo,
     validation.messages,
     validation.valid,
   ]);
@@ -1344,30 +1667,40 @@ export const PrematchBetslipProvider = ({
     setReceipt(null);
 
     try {
-      const refreshedMatches = await refresh();
-      const refreshedSelectionsByKey = buildActiveSelectionLookup(refreshedMatches);
-      const unavailableSelections = Object.values(selectedByKey).filter(
-        (selection) => !refreshedSelectionsByKey.has(selection.key)
-      );
-      if (unavailableSelections.length > 0) {
-        setSelectedByKey((current) =>
-          markUnavailableSelections(current, refreshedSelectionsByKey)
-        );
-        setServerMessage("Remove suspended selections before placing this ticket.");
-        return;
-      }
-
-      const feedChangedOdds = getFeedChangedOdds(
-        selectedByKey,
-        refreshedSelectionsByKey
-      );
-      if (feedChangedOdds.length > 0) {
-        setChangedOdds(feedChangedOdds);
-        setServerMessage("Odds changed. Review and accept the new odds before placing.");
-        return;
-      }
-
       const currentSelections = Object.values(selectedByKey);
+      const hasLiveSelections = currentSelections.some(
+        (selection) => selection.operational.isLive
+      );
+      let requestSetNo = currentSetNo;
+
+      if (!hasLiveSelections) {
+        const refreshedMatches = await refresh();
+        requestSetNo = getSetNoFromMatches(refreshedMatches);
+        const refreshedSelectionsByKey = buildActiveSelectionLookup(refreshedMatches);
+        const unavailableSelections = currentSelections.filter(
+          (selection) => !refreshedSelectionsByKey.has(selection.key)
+        );
+        if (unavailableSelections.length > 0) {
+          setSelectedByKey((current) =>
+            markUnavailableSelections(current, refreshedSelectionsByKey)
+          );
+          setServerMessage("Remove suspended selections before placing this ticket.");
+          return;
+        }
+
+        const feedChangedOdds = getFeedChangedOdds(
+          selectedByKey,
+          refreshedSelectionsByKey
+        );
+        if (feedChangedOdds.length > 0) {
+          setChangedOdds(feedChangedOdds);
+          setServerMessage("Odds changed. Review and accept the new odds before placing.");
+          return;
+        }
+      } else if (requestSetNo <= 0) {
+        requestSetNo = getSetNoFromMatches(await refresh());
+      }
+
       if (currentSelections.some((selection) => selection.status === "suspended")) {
         setServerMessage("Remove suspended selections before placing this ticket.");
         return;
@@ -1377,7 +1710,8 @@ export const PrematchBetslipProvider = ({
         currentSelections,
         stake,
         totalOdds,
-        loadedBookingCode ?? 0
+        loadedBookingCode ?? 0,
+        requestSetNo
       );
       const result = await prematchTicketApi.placeTicket(request);
 
@@ -1496,6 +1830,7 @@ export const PrematchBetslipProvider = ({
     stake,
     totalOdds,
     loadedBookingCode,
+    currentSetNo,
     user?.id,
     validation.messages,
     validation.valid,
@@ -1557,6 +1892,8 @@ export const PrematchBetslipProvider = ({
       loadedBookingCode,
       isSelected: (matchOddId: string) => Boolean(selectedByKey[matchOddId]),
       toggleSelection,
+      toggleLiveSelection,
+      syncLiveSelections,
       removeSelection,
       removeSuspendedSelections,
       clearSelections,
@@ -1592,7 +1929,9 @@ export const PrematchBetslipProvider = ({
       setStakeInput,
       stake,
       stakeInput,
+      syncLiveSelections,
       toggleSelection,
+      toggleLiveSelection,
       totalOdds,
       validation,
     ]

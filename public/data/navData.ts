@@ -176,7 +176,7 @@ export const naviTemData = [
   {
     id: 120341,
     linkText: "Live Betting",
-    href: "/floorball",
+    href: "/live-betting",
   },
   {
     id: 151272,
