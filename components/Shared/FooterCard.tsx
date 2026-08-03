@@ -30,10 +30,13 @@ export default function FooterCard() {
     potentialWin,
     validation,
     serverMessage,
+    isSubmitting,
     changedOdds,
+    receipt,
     clearSelections,
     removeSelection,
     setStakeInput,
+    placeTicket,
     acceptChangedOdds,
     cancelChangedOdds,
     removeSuspendedSelections,
@@ -49,6 +52,11 @@ export default function FooterCard() {
   );
   const isValidationBlocked =
     selectionCount > 0 && (!validation.valid || changedOdds.length > 0);
+  const canPlaceTicket =
+    selectionCount > 0 &&
+    validation.valid &&
+    changedOdds.length === 0 &&
+    !isSubmitting;
 
   useEffect(() => {
     const stored = window.localStorage.getItem("prematch-betslip-open");
@@ -147,6 +155,33 @@ export default function FooterCard() {
                 <p className="fs-seven cpoint mb-0">
                   Select an odd to add it to your betslip
                 </p>
+              </div>
+            )}
+
+            {receipt && (
+              <div className="top_matches__cmncard p2-bg p-3 rounded-3 mb-4">
+                <h6 className="mb-3">Ticket placed</h6>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="fs-eight">Receipt number</span>
+                  <strong>{receipt.receiptId ?? receipt.ticketNumber ?? "-"}</strong>
+                </div>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="fs-eight">Stake</span>
+                  <strong>{formatNumber(receipt.stake)}</strong>
+                </div>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="fs-eight">Total odds</span>
+                  <strong>{formatNumber(receipt.totalOdds)}</strong>
+                </div>
+                <div className="d-flex align-items-center justify-content-between">
+                  <span className="fs-eight">Possible return</span>
+                  <strong>{formatNumber(receipt.potentialPayout)}</strong>
+                </div>
+                {receipt.receiptTime && (
+                  <span className="fs-nine cpoint d-block mt-3">
+                    {receipt.receiptTime}
+                  </span>
+                )}
               </div>
             )}
 
@@ -293,29 +328,20 @@ export default function FooterCard() {
                   </span>
                 )}
 
-                <div className="top_matches__cmncard p2-bg p-3 rounded-3 mb-4">
-                  <h6 className="mb-2">Submission unavailable</h6>
-                  <p className="fs-nine cpoint mb-0">
-                    This read-only foundation stores selections locally only. Booking
-                    and bet placement stay disabled until backend identifier alignment
-                    is resolved.
-                  </p>
-                </div>
-
                 <div className="d-flex align-items-center gap-3 flex-wrap">
                   <button
                     className="cmn-btn third-alt px-4 py-2"
                     type="button"
-                    disabled
-                    title="Placement is unavailable for this read-only foundation."
+                    disabled={!canPlaceTicket}
+                    onClick={placeTicket}
                   >
-                    Placement unavailable
+                    {isSubmitting ? "Placing..." : "Place Bet"}
                   </button>
                   <button
                     className="cmn-btn px-4 py-2"
                     type="button"
                     disabled
-                    title="Booking is unavailable for this read-only foundation."
+                    title="Booking is not part of this placement flow."
                   >
                     Booking unavailable
                   </button>

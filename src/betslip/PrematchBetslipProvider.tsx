@@ -8,18 +8,29 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { ApiError, normalizeApiError } from "@/src/api/apiError";
+import { prematchTicketApi } from "@/src/api/prematchTicketApi";
+import { useAccount } from "@/src/account/useAccount";
 import { useActiveMatches } from "@/src/matches/useActiveMatches";
+import { useAuth } from "@/src/auth/useAuth";
 import { useOnlineSettings } from "@/src/settings/useOnlineSettings";
 import type {
   PrematchFixture,
   PrematchMarket,
   PrematchSelection,
 } from "@/src/domain/prematch";
+import type {
+  PrematchTicketRequest,
+  TicketChangedOddDto,
+  TicketReceiptDto,
+  TicketResultDto,
+  ReceiptListItemDto,
+} from "@/src/api/prematchTicketApi";
 
 const STORAGE_KEY = "smartbet.prematchBetslip.v1";
 const BOOKING_EXPIRY_MINUTES = 30;
 const SUBMISSION_UNAVAILABLE_MESSAGE =
-  "Bet placement and booking are unavailable until backend identifier alignment is resolved.";
+  "Booking is unavailable in this flow.";
 
 export type BetslipSelectionStatus = "active" | "suspended";
 
@@ -90,7 +101,7 @@ type PrematchBetslipContextValue = {
   isSubmitting: boolean;
   isBooking: boolean;
   changedOdds: BetslipChangedOdd[];
-  receipt: null;
+  receipt: BetslipReceiptState | null;
   bookingConfirmation: null;
   isSelected: (matchOddId: string) => boolean;
   toggleSelection: (
@@ -146,6 +157,8 @@ const parseStake = (value: string): number | null => {
 };
 
 const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+
+const roundOdds = (value: number): number => Math.round(value * 100) / 100;
 
 const buildSelectionKey = (selection: PrematchSelection): string =>
   selection.matchOddId ||
@@ -277,12 +290,287 @@ const createSelection = (
   };
 };
 
+const buildActiveSelectionLookup = (
+  matches: PrematchFixture[]
+): Map<string, { fixture: PrematchFixture; selection: PrematchSelection }> => {
+  const next = new Map<
+    string,
+    { fixture: PrematchFixture; selection: PrematchSelection }
+  >();
+
+  matches.forEach((fixture) => {
+    fixture.odds.forEach((selection) => {
+      next.set(buildSelectionKey(selection), { fixture, selection });
+    });
+  });
+
+  return next;
+};
+
+const toNullablePositiveInteger = (value: unknown): number | null => {
+  const parsed = toPositiveInteger(value);
+  return parsed && parsed > 0 ? parsed : null;
+};
+
+const getChangedOddValue = <T,>(
+  change: TicketChangedOddDto,
+  pascalKey: keyof TicketChangedOddDto,
+  camelKey: keyof TicketChangedOddDto
+): T | undefined => {
+  const pascal = change[pascalKey];
+  if (pascal !== undefined) return pascal as T;
+  return change[camelKey] as T | undefined;
+};
+
+const getTicketResultValue = <T,>(
+  result: TicketResultDto,
+  pascalKey: keyof TicketResultDto,
+  camelKey: keyof TicketResultDto
+): T | undefined => {
+  const pascal = result[pascalKey];
+  if (pascal !== undefined) return pascal as T;
+  return result[camelKey] as T | undefined;
+};
+
+const getReceiptValue = <T,>(
+  receipt: TicketReceiptDto,
+  pascalKey: keyof TicketReceiptDto,
+  camelKey: keyof TicketReceiptDto
+): T | undefined => {
+  const pascal = receipt[pascalKey];
+  if (pascal !== undefined) return pascal as T;
+  return receipt[camelKey] as T | undefined;
+};
+
+const createTicketRequest = (
+  selections: SelectedPrematchSelection[],
+  stake: number,
+  totalOdds: number
+): PrematchTicketRequest => ({
+  BetData: selections.map((selection) => ({
+    BetCategory: selection.operational.betCategory,
+    BetOption: selection.operational.betOption,
+    BookMakerId: selection.operational.bookmakerId,
+    Line: selection.operational.line,
+    MatchId: selection.operational.matchId ?? 0,
+    MatchOddId: toNullablePositiveInteger(selection.display.matchOddId),
+    Odd: selection.operational.odd,
+    OptionId: null,
+    ShortCode: selection.operational.shortCode,
+    IsLive: false,
+    Period: 0,
+    BetMinute: 0,
+    Scores: null,
+    HomeScore: 0,
+    AwayScore: 0,
+  })),
+  SetNo: 0,
+  TotalBonus: 0,
+  TotalOdd: totalOdds,
+  TotalStake: Math.trunc(stake),
+  BookingCode: 0,
+  IsLive: false,
+  BonusId: 0,
+  PaymentSource: null,
+  PaymentReference: null,
+});
+
+const findSelectionForChangedOdd = (
+  selectedByKey: Record<string, SelectedPrematchSelection>,
+  change: TicketChangedOddDto
+): SelectedPrematchSelection | null => {
+  const matchOddId = getChangedOddValue<number | null>(
+    change,
+    "MatchOddId",
+    "matchOddId"
+  );
+  const matchId = getChangedOddValue<number>(change, "MatchId", "matchId");
+  const market = getChangedOddValue<string>(
+    change,
+    "BetCategory",
+    "betCategory"
+  );
+  const option = getChangedOddValue<string>(change, "BetOption", "betOption");
+  const line = getChangedOddValue<string | null>(change, "Line", "line");
+
+  return (
+    Object.values(selectedByKey).find((selection) => {
+      if (
+        matchOddId &&
+        selection.display.matchOddId &&
+        String(matchOddId) === selection.display.matchOddId
+      ) {
+        return true;
+      }
+
+      return (
+        matchId === selection.operational.matchId &&
+        market === selection.operational.betCategory &&
+        option === selection.operational.betOption &&
+        String(line ?? "") === String(selection.operational.line ?? "")
+      );
+    }) ??
+    (matchId
+      ? Object.values(selectedByKey).find(
+          (selection) => matchId === selection.operational.matchId
+        )
+      : null) ??
+    null
+  );
+};
+
+const mapChangedOdds = (
+  selectedByKey: Record<string, SelectedPrematchSelection>,
+  changes: TicketChangedOddDto[] | null | undefined
+): BetslipChangedOdd[] =>
+  (changes ?? []).map((change) => {
+    const selection = findSelectionForChangedOdd(selectedByKey, change);
+    const matchId =
+      getChangedOddValue<number>(change, "MatchId", "matchId") ??
+      selection?.operational.matchId ??
+      null;
+    const matchOddId =
+      getChangedOddValue<number | null>(change, "MatchOddId", "matchOddId") ??
+      null;
+    const market =
+      getChangedOddValue<string>(change, "BetCategory", "betCategory") ??
+      selection?.operational.betCategory ??
+      "";
+    const option =
+      getChangedOddValue<string>(change, "BetOption", "betOption") ??
+      selection?.operational.betOption ??
+      "";
+    const newOdd =
+      getChangedOddValue<number>(change, "Odd", "odd") ??
+      selection?.operational.odd ??
+      null;
+    const oldOdd =
+      getChangedOddValue<number | null>(change, "PostedOdd", "postedOdd") ??
+      selection?.operational.odd ??
+      null;
+
+    return {
+      key: selection?.key ?? null,
+      matchId,
+      matchOddId,
+      market,
+      option,
+      line:
+        getChangedOddValue<string | null>(change, "Line", "line") ??
+        selection?.operational.line ??
+        null,
+      oldOdd,
+      newOdd,
+      message:
+        getChangedOddValue<string | null>(
+          change,
+          "ValidationError",
+          "validationError"
+        ) ?? null,
+    };
+  });
+
+const mapTicketReceipt = (
+  receipt: TicketReceiptDto,
+  fallbackStake: number,
+  fallbackTotalOdds: number,
+  fallbackPotentialWin: number
+): BetslipReceiptState => ({
+  ticketNumber:
+    getReceiptValue<number>(receipt, "ReceiptNumber", "receiptNumber") ?? null,
+  receiptId:
+    getReceiptValue<number>(receipt, "ReceiptNumber", "receiptNumber") ?? null,
+  bookingCode:
+    getReceiptValue<number>(receipt, "BookingCode", "bookingCode") ?? null,
+  stake:
+    getReceiptValue<number>(receipt, "Stake", "stake") ?? fallbackStake,
+  totalOdds:
+    getReceiptValue<number>(receipt, "TotalOdds", "totalOdds") ??
+    fallbackTotalOdds,
+  potentialPayout: fallbackPotentialWin,
+  receiptTime:
+    getReceiptValue<string>(receipt, "ReceiptTime", "receiptTime") ?? null,
+  serial: getReceiptValue<string>(receipt, "Serial", "serial") ?? null,
+});
+
+const mapReceiptListItem = (
+  receipt: ReceiptListItemDto,
+  fallbackStake: number,
+  fallbackTotalOdds: number,
+  fallbackPotentialWin: number
+): BetslipReceiptState => ({
+  ticketNumber: receipt.ReceiptId ?? receipt.receiptId ?? null,
+  receiptId: receipt.ReceiptId ?? receipt.receiptId ?? null,
+  bookingCode: null,
+  stake: receipt.Stake ?? receipt.stake ?? fallbackStake,
+  totalOdds: receipt.TotalOdds ?? receipt.totalOdds ?? fallbackTotalOdds,
+  potentialPayout: fallbackPotentialWin,
+  receiptTime: receipt.ReceiptDate ?? receipt.receiptDate ?? null,
+  serial: receipt.SerialCode ?? receipt.serialCode ?? null,
+});
+
+const getFeedChangedOdds = (
+  selectedByKey: Record<string, SelectedPrematchSelection>,
+  activeSelectionsByKey: Map<
+    string,
+    { fixture: PrematchFixture; selection: PrematchSelection }
+  >
+): BetslipChangedOdd[] =>
+  Object.entries(selectedByKey).reduce<BetslipChangedOdd[]>(
+    (changes, [key, selected]) => {
+      const activeSelection = activeSelectionsByKey.get(key);
+      if (!activeSelection || activeSelection.selection.odd === selected.operational.odd) {
+        return changes;
+      }
+
+      changes.push({
+        key,
+        matchId: selected.operational.matchId,
+        matchOddId: toNullablePositiveInteger(selected.display.matchOddId),
+        market: selected.operational.betCategory,
+        option: selected.operational.betOption,
+        line: selected.operational.line,
+        oldOdd: selected.operational.odd,
+        newOdd: activeSelection.selection.odd,
+        message: null,
+      });
+      return changes;
+    },
+    []
+  );
+
+const markUnavailableSelections = (
+  selectedByKey: Record<string, SelectedPrematchSelection>,
+  activeSelectionsByKey: Map<
+    string,
+    { fixture: PrematchFixture; selection: PrematchSelection }
+  >
+): Record<string, SelectedPrematchSelection> => {
+  let changed = false;
+  const next = { ...selectedByKey };
+
+  Object.entries(next).forEach(([key, selected]) => {
+    if (activeSelectionsByKey.has(key)) return;
+
+    next[key] = {
+      ...selected,
+      status: "suspended",
+      statusMessage: "This selection is no longer available in the active feed.",
+    };
+    changed = true;
+  });
+
+  return changed ? next : selectedByKey;
+};
+
 export const PrematchBetslipProvider = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const { matches } = useActiveMatches();
+  const { isAuthenticated, refreshSession, user } = useAuth();
+  const { refreshAccount } = useAccount();
+  const { matches, refresh } = useActiveMatches();
   const { minStake, maxStake, maxPayout } = useOnlineSettings();
   const restoredRef = useRef(false);
   const [selectedByKey, setSelectedByKey] = useState<
@@ -291,6 +579,8 @@ export const PrematchBetslipProvider = ({
   const [stakeInput, setStakeInputState] = useState("");
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const [changedOdds, setChangedOdds] = useState<BetslipChangedOdd[]>([]);
+  const [receipt, setReceipt] = useState<BetslipReceiptState | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const persisted = loadPersistedBetslip();
@@ -314,18 +604,7 @@ export const PrematchBetslipProvider = ({
   }, [selectedByKey, stakeInput]);
 
   const activeSelectionsByKey = useMemo(() => {
-    const next = new Map<
-      string,
-      { fixture: PrematchFixture; selection: PrematchSelection }
-    >();
-
-    matches.forEach((fixture) => {
-      fixture.odds.forEach((selection) => {
-        next.set(buildSelectionKey(selection), { fixture, selection });
-      });
-    });
-
-    return next;
+    return buildActiveSelectionLookup(matches);
   }, [matches]);
 
   useEffect(() => {
@@ -367,7 +646,7 @@ export const PrematchBetslipProvider = ({
             },
             operational: {
               ...existing.operational,
-              matchId: toPositiveInteger(fixture.originalMatchId),
+              matchId: getFixtureMatchId(fixture),
               bookmakerId: toPositiveInteger(selection.bookmakerId) ?? 0,
               odd: selection.odd,
               shortCode:
@@ -397,7 +676,7 @@ export const PrematchBetslipProvider = ({
   const stake = useMemo(() => parseStake(stakeInput), [stakeInput]);
   const totalOdds = useMemo(() => {
     if (selections.length === 0) return 0;
-    return roundMoney(
+    return roundOdds(
       selections.reduce((total, selection) => total * selection.operational.odd, 1)
     );
   }, [selections]);
@@ -460,15 +739,18 @@ export const PrematchBetslipProvider = ({
   const setStakeInput = useCallback((value: string) => {
     setStakeInputState(normalizeStakeInput(value));
     setServerMessage(null);
+    setReceipt(null);
   }, []);
 
   const clearSelections = useCallback(() => {
     setSelectedByKey({});
     setChangedOdds([]);
     setServerMessage(null);
+    setReceipt(null);
   }, []);
 
   const clearReceipt = useCallback(() => {
+    setReceipt(null);
     setServerMessage(null);
   }, []);
 
@@ -479,6 +761,7 @@ export const PrematchBetslipProvider = ({
       return next;
     });
     setChangedOdds((current) => current.filter((change) => change.key !== key));
+    setReceipt(null);
   }, []);
 
   const removeSuspendedSelections = useCallback(() => {
@@ -514,6 +797,7 @@ export const PrematchBetslipProvider = ({
       const key = buildSelectionKey(selection);
       const fixtureMatchId = getFixtureMatchId(fixture);
       setServerMessage(null);
+      setReceipt(null);
       setChangedOdds((current) =>
         current.filter((change) => {
           if (change.key === key) return false;
@@ -559,12 +843,176 @@ export const PrematchBetslipProvider = ({
     []
   );
 
-  const guardSubmission = useCallback(async () => {
-    // Phase 3 is read-only by design. Do not call /api/Ticket or
-    // /api/Ticket/Booking until OriginalMatchId is proven to match WebUI
-    // BetServiceMatchNo and the backend MatchOddId validation mismatch is resolved.
+  const bookTicket = useCallback(async () => {
     setServerMessage(SUBMISSION_UNAVAILABLE_MESSAGE);
   }, []);
+
+  const placeTicket = useCallback(async () => {
+    if (isSubmitting) return;
+
+    if (!isAuthenticated) {
+      setServerMessage("You need to sign in before placing a ticket.");
+      return;
+    }
+
+    if (!validation.valid || stake === null || stake <= 0) {
+      setServerMessage(validation.messages[0] ?? "Review the betslip before placing.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setServerMessage(null);
+    setReceipt(null);
+
+    try {
+      const refreshedMatches = await refresh();
+      const refreshedSelectionsByKey = buildActiveSelectionLookup(refreshedMatches);
+      const unavailableSelections = Object.values(selectedByKey).filter(
+        (selection) => !refreshedSelectionsByKey.has(selection.key)
+      );
+      if (unavailableSelections.length > 0) {
+        setSelectedByKey((current) =>
+          markUnavailableSelections(current, refreshedSelectionsByKey)
+        );
+        setServerMessage("Remove suspended selections before placing this ticket.");
+        return;
+      }
+
+      const feedChangedOdds = getFeedChangedOdds(
+        selectedByKey,
+        refreshedSelectionsByKey
+      );
+      if (feedChangedOdds.length > 0) {
+        setChangedOdds(feedChangedOdds);
+        setServerMessage("Odds changed. Review and accept the new odds before placing.");
+        return;
+      }
+
+      const currentSelections = Object.values(selectedByKey);
+      if (currentSelections.some((selection) => selection.status === "suspended")) {
+        setServerMessage("Remove suspended selections before placing this ticket.");
+        return;
+      }
+
+      const request = createTicketRequest(currentSelections, stake, totalOdds);
+      const result = await prematchTicketApi.placeTicket(request);
+
+      const resultChangedOdds = mapChangedOdds(
+        selectedByKey,
+        getTicketResultValue<TicketChangedOddDto[] | null>(
+          result ?? {},
+          "ChangedOdds",
+          "changedOdds"
+        )
+      );
+
+      if (resultChangedOdds.length > 0) {
+        setChangedOdds(resultChangedOdds);
+        setServerMessage("Odds changed. Review and accept the new odds before placing.");
+        return;
+      }
+
+      if (result && getTicketResultValue<boolean>(result, "Succeeded", "succeeded") === false) {
+        setServerMessage(
+          getTicketResultValue<string | null>(result, "Message", "message") ??
+            "Ticket placement failed."
+        );
+        return;
+      }
+
+      const jsonData = result
+        ? getTicketResultValue<TicketReceiptDto | null>(
+            result,
+            "JsonData",
+            "jsonData"
+          )
+        : null;
+      let nextReceipt = jsonData
+        ? mapTicketReceipt(jsonData, stake, totalOdds, potentialWin)
+        : null;
+
+      if (!nextReceipt) {
+        const latestReceipt = await prematchTicketApi
+          .getLatestReceipt(user?.id)
+          .catch(() => null);
+        if (latestReceipt) {
+          nextReceipt = mapReceiptListItem(
+            latestReceipt,
+            stake,
+            totalOdds,
+            potentialWin
+          );
+        }
+      }
+
+      setReceipt(
+        nextReceipt ?? {
+          ticketNumber: null,
+          receiptId: null,
+          bookingCode: null,
+          stake,
+          totalOdds,
+          potentialPayout: potentialWin,
+          receiptTime: null,
+          serial: null,
+        }
+      );
+      setSelectedByKey({});
+      setStakeInputState("");
+      setChangedOdds([]);
+      setServerMessage("Ticket placed successfully.");
+      void refreshAccount().catch(() => undefined);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      if (apiError instanceof ApiError && apiError.status === 401) {
+        await refreshSession().catch(() => undefined);
+        setServerMessage("Your session has expired. Please log in again.");
+        return;
+      }
+
+      const rawResult = isRecord(apiError.raw)
+        ? (apiError.raw as TicketResultDto)
+        : null;
+      const resultChangedOdds = mapChangedOdds(
+        selectedByKey,
+        rawResult
+          ? getTicketResultValue<TicketChangedOddDto[] | null>(
+              rawResult,
+              "ChangedOdds",
+              "changedOdds"
+            )
+          : null
+      );
+
+      if (resultChangedOdds.length > 0) {
+        setChangedOdds(resultChangedOdds);
+        setServerMessage("Odds changed. Review and accept the new odds before placing.");
+        return;
+      }
+
+      setServerMessage(
+        rawResult
+          ? getTicketResultValue<string | null>(rawResult, "Message", "message") ??
+              apiError.message
+          : apiError.message
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    isAuthenticated,
+    isSubmitting,
+    potentialWin,
+    refresh,
+    refreshAccount,
+    refreshSession,
+    selectedByKey,
+    stake,
+    totalOdds,
+    user?.id,
+    validation.messages,
+    validation.valid,
+  ]);
 
   const acceptChangedOdds = useCallback(() => {
     setSelectedByKey((current) => {
@@ -594,6 +1042,7 @@ export const PrematchBetslipProvider = ({
     });
     setChangedOdds([]);
     setServerMessage(null);
+    setReceipt(null);
   }, [changedOdds]);
 
   const cancelChangedOdds = useCallback(() => {
@@ -611,10 +1060,10 @@ export const PrematchBetslipProvider = ({
       potentialWin,
       validation,
       serverMessage,
-      isSubmitting: false,
+      isSubmitting,
       isBooking: false,
       changedOdds,
-      receipt: null,
+      receipt,
       bookingConfirmation: null,
       isSelected: (matchOddId: string) => Boolean(selectedByKey[matchOddId]),
       toggleSelection,
@@ -622,8 +1071,8 @@ export const PrematchBetslipProvider = ({
       removeSuspendedSelections,
       clearSelections,
       setStakeInput,
-      placeTicket: guardSubmission,
-      bookTicket: guardSubmission,
+      placeTicket,
+      bookTicket,
       acceptChangedOdds,
       cancelChangedOdds,
       clearReceipt,
@@ -634,8 +1083,11 @@ export const PrematchBetslipProvider = ({
       changedOdds,
       clearReceipt,
       clearSelections,
-      guardSubmission,
+      bookTicket,
+      isSubmitting,
+      placeTicket,
       potentialWin,
+      receipt,
       removeSelection,
       removeSuspendedSelections,
       selectedByKey,
