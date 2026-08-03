@@ -96,7 +96,7 @@ export default function HeaderTwo() {
                                 <span className="fw-bold d-block">{balanceText}</span>
                             </div>
                         )}
-                        <button className="cmn-btn px-xxl-6 d-none d-sm-block d-lg-none d-xxl-block">Deposit</button>
+                        <Link href="/deposit?method=shop" className="cmn-btn px-xxl-6 d-none d-sm-block d-lg-none d-xxl-block">Deposit</Link>
                         {isAuthenticated ? (
                             <button type="button" onClick={handleLogout} disabled={loggingOut} className="cmn-btn second-alt px-xxl-11 rounded-2">{loggingOut ? 'Logging Out...' : 'Log Out'}</button>
                         ) : (
