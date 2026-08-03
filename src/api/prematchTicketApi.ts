@@ -93,6 +93,8 @@ export type BookingSelectionDto = {
   optionId?: number | null;
   ShortCode?: number | null;
   shortCode?: number | null;
+  SetNo?: number | null;
+  setNo?: number | null;
   IsLive?: boolean;
   isLive?: boolean;
 };

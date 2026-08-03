@@ -1,5 +1,6 @@
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 const DEFAULT_MATCHES_API_BASE_URL = "https://api-games.smbet.net";
+const DEFAULT_MATCHES_API_PATH = "/";
 
 const trimTrailingSlashes = (value: string) => value.replace(/\/+$/, "");
 const trimSlashes = (value: string) => value.replace(/^\/+|\/+$/g, "");
@@ -40,6 +41,8 @@ export const matchesApiConfig = {
     process.env.NEXT_PUBLIC_MATCHES_API_BASE_URL ||
       DEFAULT_MATCHES_API_BASE_URL
   ),
+  activeMatchesPath:
+    process.env.NEXT_PUBLIC_MATCHES_API_PATH?.trim() || DEFAULT_MATCHES_API_PATH,
   requestTimeoutMs: apiConfig.requestTimeoutMs,
   refreshIntervalMs: 5 * 60 * 1000,
 };

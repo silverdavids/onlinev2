@@ -48,6 +48,7 @@ export type SelectedPrematchSelection = {
   };
   operational: {
     matchId: number | null;
+    setNo?: number | null;
     betCategory: string;
     betOption: string;
     line: string | null;
@@ -286,6 +287,7 @@ const createSelection = (
     },
     operational: {
       matchId,
+      setNo: toPositiveInteger(fixture.setNo),
       betCategory: selection.betCategory,
       betOption: selection.betOption,
       line: selection.line,
@@ -357,8 +359,14 @@ const createTicketRequest = (
   stake: number,
   totalOdds: number,
   bookingCode = 0
-): PrematchTicketRequest => ({
-  BetData: selections.map((selection) => ({
+): PrematchTicketRequest => {
+  const setNo =
+    selections
+      .map((selection) => selection.operational.setNo)
+      .find((value): value is number => typeof value === "number" && value > 0) ?? 0;
+
+  return {
+    BetData: selections.map((selection) => ({
     BetCategory: selection.operational.betCategory,
     BetOption: selection.operational.betOption,
     BookMakerId: selection.operational.bookmakerId,
@@ -375,7 +383,7 @@ const createTicketRequest = (
     HomeScore: 0,
     AwayScore: 0,
   })),
-  SetNo: 0,
+  SetNo: setNo,
   TotalBonus: 0,
   TotalOdd: totalOdds,
   TotalStake: Math.trunc(stake),
@@ -384,7 +392,8 @@ const createTicketRequest = (
   BonusId: 0,
   PaymentSource: null,
   PaymentReference: null,
-});
+  };
+};
 
 const findSelectionForChangedOdd = (
   selectedByKey: Record<string, SelectedPrematchSelection>,
@@ -664,6 +673,14 @@ const createSuspendedBookingSelection = (
     },
     operational: {
       matchId,
+      setNo:
+        fixture?.setNo !== undefined
+          ? toPositiveInteger(fixture.setNo)
+          : getBookingSelectionValue<number | null>(
+              bookingSelection,
+              "SetNo",
+              "setNo"
+            ) ?? null,
       betCategory: market,
       betOption: option,
       line: getBookingSelectionValue<string | null>(bookingSelection, "Line", "line") ?? null,
@@ -858,8 +875,20 @@ export const PrematchBetslipProvider = ({
         }
 
         const { fixture, selection } = activeSelection;
+        const nextMatchId = getFixtureMatchId(fixture);
+        const nextSetNo = toPositiveInteger(fixture.setNo);
+        const nextBookmakerId = toPositiveInteger(selection.bookmakerId) ?? 0;
+        const nextShortCode =
+          toPositiveInteger(fixture.shortCode) ??
+          toPositiveInteger(fixture.matchNo) ??
+          existing.operational.shortCode;
+
         if (
           existing.operational.odd !== selection.odd ||
+          existing.operational.matchId !== nextMatchId ||
+          existing.operational.setNo !== nextSetNo ||
+          existing.operational.bookmakerId !== nextBookmakerId ||
+          existing.operational.shortCode !== nextShortCode ||
           existing.status !== "active"
         ) {
           next[key] = {
@@ -875,13 +904,11 @@ export const PrematchBetslipProvider = ({
             },
             operational: {
               ...existing.operational,
-              matchId: getFixtureMatchId(fixture),
-              bookmakerId: toPositiveInteger(selection.bookmakerId) ?? 0,
+              matchId: nextMatchId,
+              setNo: nextSetNo,
+              bookmakerId: nextBookmakerId,
               odd: selection.odd,
-              shortCode:
-                toPositiveInteger(fixture.shortCode) ??
-                toPositiveInteger(fixture.matchNo) ??
-                existing.operational.shortCode,
+              shortCode: nextShortCode,
             },
             previousOdd:
               existing.operational.odd !== selection.odd

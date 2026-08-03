@@ -182,10 +182,10 @@ export const adaptActiveMatchDto = (
   if (!isRecord(match)) return null;
 
   const originalMatchId = normalizeActiveIdentifier(match.OriginalMatchId);
-  const league = adaptActiveLeagueDto(match.League);
+  const league = adaptActiveLeagueDto(match.League ?? match.Champ);
   const homeTeamName = toTrimmedString(match.HomeTeamName);
   const awayTeamName = toTrimmedString(match.AwayTeamName);
-  const start = parseActiveMatchDate(match.StartTime);
+  const start = parseActiveMatchDate(match.OldDateTime ?? match.StartTime);
 
   if (!originalMatchId || !league || !homeTeamName || !awayTeamName || !start) {
     return null;
@@ -209,6 +209,7 @@ export const adaptActiveMatchDto = (
       matchNo: normalizeActiveIdentifier(match.MatchNo),
       shortCode: normalizeActiveIdentifier(match.ShortCode),
       leagueId: normalizeActiveIdentifier(match.LeagueId),
+      setNo: normalizeActiveIdentifier(match.SetNo),
       sportId: ACTIVE_FEED_SPORT_ID,
       sportName: ACTIVE_FEED_SPORT_NAME,
       isJackpot: match.IsJackPot === true,

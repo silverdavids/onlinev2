@@ -21,10 +21,13 @@ export type ActiveMatchDto = {
   ShortCode?: unknown;
   LeagueId?: unknown;
   League?: unknown;
+  Champ?: unknown;
   IsJackPot?: boolean | null;
   StartTime?: unknown;
+  OldDateTime?: unknown;
   GameStatus?: unknown;
   AwayTeamName?: unknown;
   HomeTeamName?: unknown;
   MatchOdds?: unknown;
+  SetNo?: unknown;
 };

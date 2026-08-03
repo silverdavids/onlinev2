@@ -30,6 +30,7 @@ export type PrematchFixture = {
   matchNo: string | null;
   shortCode: string | null;
   leagueId: string | null;
+  setNo: string | null;
   sportId: PrematchSportId;
   sportName: string;
   isJackpot: boolean;
