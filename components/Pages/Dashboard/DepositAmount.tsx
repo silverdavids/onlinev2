@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { amountData } from '@/public/data/dashBoard';
 import axios from 'axios';
+import Link from 'next/link';
 
 // Helper function to extract numbers only
 const getCleanAmount = (value: any): string => {
@@ -109,8 +110,14 @@ export default function DepositAmount() {
 
     return (
         <div className="pay_method__paymethod p-4 p-lg-6 p2-bg rounded-8">
-            <div className="pay_method__paymethod-title mb-5 mb-md-6">
+            <div className="pay_method__paymethod-title d-flex align-items-center justify-content-between gap-3 flex-wrap mb-5 mb-md-6">
                 <h5 className="n10-color">Choose or enter your deposit amount</h5>
+                <Link
+                    className="cmn-btn second-alt py-2 px-5 fw-bold"
+                    href="/deposit?method=shop"
+                >
+                    Shop Deposit
+                </Link>
             </div>
             
             {/* Amount Grid */}
