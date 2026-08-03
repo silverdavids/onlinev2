@@ -1,13 +1,12 @@
 "use client"
 
 import React, { useState } from 'react';
-import { IconWallet, IconCreditCard, IconCreditCardOff, IconLogout, IconUser, IconSettings, IconBellRinging, IconHistory, } from "@tabler/icons-react";
-import { amountData } from '@/public/data/dashBoard';
+import { IconUser } from "@tabler/icons-react";
 import DepositCard from './DepositCard';
 import DepositAmount from './DepositAmount';
 import { Tab } from '@headlessui/react';
 import WithdrawalAmount from './WithdrawalAmount';
-import Link from 'next/link';
+import TransactionHistory from './TransactionHistory';
 import { dashboardTabs } from '@/public/data/dashTabs';
 import { useAuth } from '@/src/auth/useAuth';
 import { useAccount } from '@/src/account/useAccount';
@@ -32,11 +31,6 @@ export default function Dashboard() {
     const digitsOnly = (value: string): string => {
         return value.replace(/[^0-9]/g, '');
     };
-
-    // --- Transactions State Management ---
-    const [transactions] = useState<any[]>([]);
-    const [txLoading] = useState<boolean>(false);
-    const [txError] = useState<string>('');
 
     // 1. Isolated state object strictly scoped to this component instance
     const [aboutYouData, setAboutYouData] = useState({
@@ -216,142 +210,7 @@ export default function Dashboard() {
                                                     </div>
                                                 </Tab.Panel>
                                                 <Tab.Panel>
-                                                    <div className="pay_method__tabletwo">
-                                                        <div style={{ overflowX: 'auto' }} className="pay_method__table-scrollbar">
-                                                            <table className="w-100 text-center p2-bg">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th className="text-nowrap">Transaction ID</th>
-                                                                        <th className="text-nowrap">Date</th>
-                                                                        <th className="text-nowrap">Transaction type</th>
-                                                                        <th className="text-nowrap">Amount/Balance</th>
-                                                                        <th className="text-nowrap">Status</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {txLoading ? (
-                                                                        <tr>
-                                                                            <td colSpan={5} className="py-5 text-white">
-                                                                                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-                                                                                Loading account transactions......
-                                                                            </td>
-                                                                        </tr>
-                                                                    ) : txError ? (
-                                                                        <tr>
-                                                                            <td colSpan={5} className="py-5 text-danger fw-bold">{txError}</td>
-                                                                        </tr>
-                                                                    ) : transactions.length === 0 ? (
-                                                                        <tr>
-                                                                            <td colSpan={5} className="py-5 text-white-50">No recent transactions found.</td>
-                                                                        </tr>
-                                                                    ) : (
-                                                                        transactions.map((tx: any, index: number) => (
-                                                                            <tr key={tx.id || tx.transaction_id || index}>
-                                                                                <td className="text-nowrap">{tx.reference || tx.id || tx.transaction_id}</td>
-                                                                                <td className="text-nowrap">
-                                                                                    {tx.created_at ? new Date(tx.created_at).toLocaleString(undefined, {
-                                                                                        year: 'numeric', month: '2-digit', day: '2-digit',
-                                                                                        hour: '2-digit', minute: '2-digit'
-                                                                                    }) : 'N/A'}
-                                                                                </td>
-                                                                                <td className="text-nowrap capitalize">{tx.type || tx.transaction_type || 'Deposit'}</td>
-                                                                                <td className="text-nowrap fw-bold">{tx.currency || 'UGX'} {(tx.amount || 0).toLocaleString()}</td>
-                                                                                <td className="text-nowrap">
-                                                                                    <label className={`fw-bold capitalize ${
-                                                                                        tx.status === 'success' || tx.status === 'completed' ? 'g1-color' : 'r1-color'
-                                                                                    }`}>
-                                                                                        {tx.status || 'Unknown'}
-                                                                                    </label>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ))
-                                                                    )}
-                                                                </tbody>
-                                                                
-                                                                <tr>
-                                                                    <td className="text-nowrap">2PQ8B4KYMJ</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="text-nowrap">4TQRW5WXF4</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="text-nowrap">4TQRW5WXF4</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="text-nowrap">VEJP8A5J87</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="text-nowrap">JKNFWEJ123</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="text-nowrap">NC8S4QJ4K2</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="text-nowrap">DGPSN7SRM4</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="text-nowrap">ZT3FA5D8N7</td>
-                                                                    <td className="text-nowrap">23.06.2026, 11:31</td>
-                                                                    <td className="text-nowrap">5,591 UGX</td>
-                                                                    <td className="text-nowrap">300.00</td>
-                                                                    <td className="text-nowrap">
-                                                                        <label className="g1-color fw-normal cpoint ">Success</label> &nbsp; | &nbsp;
-                                                                        <label className="r1-color fw-normal cpoint">Failed</label>
-                                                                    </td>
-                                                                </tr>
-
-                                                            </table>
-                                                        </div>
-                                                    </div>
+                                                    <TransactionHistory />
                                                 </Tab.Panel>
                                                 <Tab.Panel>
                                                     <div className="pay_method__paymethod p-4 p-lg-6 p2-bg rounded-8">
