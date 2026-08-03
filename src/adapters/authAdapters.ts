@@ -30,6 +30,7 @@ export const toRegisterOnlineRequestDto = (
   SurName: normalizeOptionalString(form.surname),
   NIN: normalizeOptionalString(form.nin),
   DOB: normalizeOptionalString(form.dob),
+  PromoCode: normalizeOptionalString(form.promoCode),
 });
 
 export const toUserSessionViewModel = (

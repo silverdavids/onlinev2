@@ -195,7 +195,7 @@ export const naviTemData = [
   },
   {
     id: 122880,
-    linkText: "Promotions",
+    linkText: "My Bonuses",
     href: "/promotions",
   },
 ];

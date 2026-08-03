@@ -24,6 +24,7 @@ export type RegistrationFormModel = {
   surname?: string;
   nin?: string;
   dob?: string;
+  promoCode?: string;
 };
 
 export type AccountProfileViewModel = {
@@ -41,15 +42,20 @@ export type OnlineSettingsViewModel = {
 
 export type AccountBonusesViewModel = {
   wallets: Array<{
+    walletId?: number | null;
     campaignName: string;
+    bonusType?: string | null;
+    campaignDescription?: string | null;
     promoCode: string | null;
     bonusBalance: number;
     wageredAmount: number;
     requiredWagerAmount: number;
-    expiryDate: string;
+    expiryDate: string | null;
     status: string;
+    createdAt?: string | null;
   }>;
   transactions: Array<{
+    bonusTransactionId?: number | null;
     createdAt: string;
     transactionType: string;
     amount: number;
@@ -57,5 +63,6 @@ export type AccountBonusesViewModel = {
     balanceAfter: number;
     referenceType: string;
     referenceId: string | number | null;
+    description?: string | null;
   }>;
 };

@@ -21,6 +21,7 @@ export default function CreateAccount() {
         email: '',
         birth_date: '',
         national_nin: '',
+        promo_code: '',
         agree: false
     });
     const [otpData, setOtpData] = useState({
@@ -69,12 +70,16 @@ export default function CreateAccount() {
                 phoneNumber: formData.phone_number,
                 email: formData.email,
                 dob: formData.birth_date,
-                nin: formData.national_nin
+                nin: formData.national_nin,
+                promoCode: formData.promo_code
             });
 
+            const promoText = response.promoMessage
+                ? ` ${response.promoMessage}`
+                : '';
             setMessage({
                 type: 'success',
-                text: response.message || 'Account created successfully. Enter the OTP sent to your phone and create a password.'
+                text: `${response.message || 'Account created successfully. Enter the OTP sent to your phone and create a password.'}${promoText}`
             });
             setStep('otp');
 
@@ -244,6 +249,16 @@ export default function CreateAccount() {
                                                         value={formData.national_nin}
                                                         onChange={handleChange}
                                                         required
+                                                    />
+                                                </div>
+                                                <div className="mb-5 mb-md-6">
+                                                    <input
+                                                        className="n11-bg"
+                                                        name="promo_code"
+                                                        placeholder="Promo Code (optional)"
+                                                        type="text"
+                                                        value={formData.promo_code}
+                                                        onChange={handleChange}
                                                     />
                                                 </div>
                                                 <div className="d-flex align-items-center flex-wrap flex-sm-nowrap gap-2 mb-6">

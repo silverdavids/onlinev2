@@ -49,12 +49,15 @@ export type RegisterOnlineRequestDto = {
   SurName?: string;
   NIN?: string;
   DOB?: string;
+  PromoCode?: string;
 };
 
 export type RegisterOnlineResponseDto = {
   success: boolean;
   message: string;
   expiresAt?: string;
+  promoApplied?: boolean;
+  promoMessage?: string | null;
 };
 
 export type VerifyOtpAndSetPasswordRequestDto = {
@@ -93,15 +96,20 @@ export type OnlineUserInformationDto = {
 
 export type AccountBonusesResponseDto = {
   wallets: Array<{
+    walletId?: number | null;
     campaignName: string;
+    bonusType?: string | null;
+    campaignDescription?: string | null;
     promoCode: string | null;
     bonusBalance: number;
     wageredAmount: number;
     requiredWagerAmount: number;
-    expiryDate: string;
+    expiryDate: string | null;
     status: string;
+    createdAt?: string | null;
   }>;
   transactions: Array<{
+    bonusTransactionId?: number | null;
     createdAt: string;
     transactionType: string;
     amount: number;
@@ -109,6 +117,7 @@ export type AccountBonusesResponseDto = {
     balanceAfter: number;
     referenceType: string;
     referenceId: string | number | null;
+    description?: string | null;
   }>;
 };
 
