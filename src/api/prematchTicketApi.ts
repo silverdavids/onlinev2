@@ -24,7 +24,7 @@ export type PrematchTicketRequest = {
   TotalBonus: number;
   TotalOdd: number;
   TotalStake: number;
-  BookingCode: 0;
+  BookingCode: number;
   IsLive: false;
   BonusId: 0;
   PaymentSource: null;
@@ -67,6 +67,53 @@ export type TicketReceiptDto = {
   bookingCode?: number;
 };
 
+export type BookingSelectionDto = {
+  MatchId?: number;
+  matchId?: number;
+  MatchOddId?: number | null;
+  matchOddId?: number | null;
+  Market?: string;
+  market?: string;
+  BetCategory?: string;
+  betCategory?: string;
+  Option?: string;
+  option?: string;
+  BetOption?: string;
+  betOption?: string;
+  Line?: string | null;
+  line?: string | null;
+  BookMakerId?: number;
+  bookMakerId?: number;
+  bookmakerId?: number;
+  Odd?: number;
+  odd?: number;
+  BetOdd?: number;
+  betOdd?: number;
+  OptionId?: number | null;
+  optionId?: number | null;
+  ShortCode?: number | null;
+  shortCode?: number | null;
+  IsLive?: boolean;
+  isLive?: boolean;
+};
+
+export type BookingLookupDto = {
+  Stake?: number;
+  stake?: number;
+  TotalStake?: number;
+  totalStake?: number;
+  SetNo?: number;
+  setNo?: number;
+  IsLive?: boolean;
+  isLive?: boolean;
+  TotalBonus?: number;
+  totalBonus?: number;
+  BookingCode?: number;
+  bookingCode?: number;
+  GameBets?: BookingSelectionDto[];
+  gameBets?: BookingSelectionDto[];
+};
+
 export type TicketResultDto = {
   Succeeded?: boolean;
   succeeded?: boolean;
@@ -104,6 +151,32 @@ export const prematchTicketApi = {
       config
     );
     return response.data ?? null;
+  },
+
+  async createBooking(
+    request: PrematchTicketRequest,
+    config?: ApiRequestConfig
+  ): Promise<TicketResultDto> {
+    const response = await apiClient.post<TicketResultDto>(
+      "/Ticket/Booking",
+      request,
+      config
+    );
+    return response.data;
+  },
+
+  async getBooking(
+    bookingCode: number,
+    config?: ApiRequestConfig
+  ): Promise<BookingLookupDto> {
+    const response = await apiClient.get<BookingLookupDto>("/Ticket/GetBooking", {
+      ...config,
+      params: {
+        id: bookingCode,
+        ...config?.params,
+      },
+    });
+    return response.data;
   },
 
   async getLatestReceipt(

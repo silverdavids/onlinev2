@@ -22,6 +22,7 @@ const formatOdd = (value: number): string =>
 export default function FooterCard() {
   const [isCardExpanded, setIsCardExpanded] = useState(false);
   const [isBetslipBetEnabled, setIsBetslipBetEnabled] = useState(false);
+  const [bookingCodeInput, setBookingCodeInput] = useState("");
   const {
     selections,
     selectionCount,
@@ -31,12 +32,18 @@ export default function FooterCard() {
     validation,
     serverMessage,
     isSubmitting,
+    isBooking,
+    isRetrievingBooking,
     changedOdds,
     receipt,
+    bookingConfirmation,
+    loadedBookingCode,
     clearSelections,
     removeSelection,
     setStakeInput,
     placeTicket,
+    bookTicket,
+    retrieveBooking,
     acceptChangedOdds,
     cancelChangedOdds,
     removeSuspendedSelections,
@@ -56,7 +63,16 @@ export default function FooterCard() {
     selectionCount > 0 &&
     validation.valid &&
     changedOdds.length === 0 &&
-    !isSubmitting;
+    !isSubmitting &&
+    !isBooking &&
+    !isRetrievingBooking;
+  const canBookTicket =
+    selectionCount > 0 &&
+    validation.valid &&
+    changedOdds.length === 0 &&
+    !isBooking &&
+    !isSubmitting &&
+    !isRetrievingBooking;
 
   useEffect(() => {
     const stored = window.localStorage.getItem("prematch-betslip-open");
@@ -188,6 +204,35 @@ export default function FooterCard() {
             {serverMessage && (
               <div className="top_matches__cmncard p2-bg p-3 rounded-3 mb-4">
                 <span className="fs-seven">{serverMessage}</span>
+              </div>
+            )}
+
+            {bookingConfirmation && (
+              <div className="top_matches__cmncard p2-bg p-3 rounded-3 mb-4">
+                <h6 className="mb-3">Booking saved</h6>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="fs-eight">Booking code</span>
+                  <strong>{bookingConfirmation.bookingCode}</strong>
+                </div>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="fs-eight">Stake</span>
+                  <strong>{formatNumber(bookingConfirmation.stake)}</strong>
+                </div>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="fs-eight">Total odds</span>
+                  <strong>{formatNumber(bookingConfirmation.totalOdds)}</strong>
+                </div>
+                <span className="fs-nine cpoint d-block mt-3">
+                  Expires in {bookingConfirmation.expiresInMinutes} minutes
+                </span>
+              </div>
+            )}
+
+            {loadedBookingCode && !bookingConfirmation && (
+              <div className="top_matches__cmncard p2-bg p-3 rounded-3 mb-4">
+                <span className="fs-seven">
+                  Loaded booking {loadedBookingCode}
+                </span>
               </div>
             )}
 
@@ -340,10 +385,10 @@ export default function FooterCard() {
                   <button
                     className="cmn-btn px-4 py-2"
                     type="button"
-                    disabled
-                    title="Booking is not part of this placement flow."
+                    disabled={!canBookTicket}
+                    onClick={bookTicket}
                   >
-                    Booking unavailable
+                    {isBooking ? "Saving..." : "Save Booking"}
                   </button>
                   <button
                     className="cmn-btn px-4 py-2"
@@ -355,6 +400,38 @@ export default function FooterCard() {
                 </div>
               </>
             )}
+
+            <div className="top_matches__cmncard p2-bg p-3 rounded-3 mt-4">
+              <label className="fs-eight d-block mb-2" htmlFor="prematch-booking-code">
+                Booking code
+              </label>
+              <div className="d-flex align-items-center gap-3">
+                <input
+                  id="prematch-booking-code"
+                  className="p2-bg rounded-3 py-2 px-3 border-0 n4-color w-100"
+                  inputMode="numeric"
+                  placeholder="Enter code"
+                  type="text"
+                  value={bookingCodeInput}
+                  onChange={(event) =>
+                    setBookingCodeInput(event.target.value.replace(/\D/g, ""))
+                  }
+                />
+                <button
+                  className="cmn-btn third-alt px-4 py-2"
+                  type="button"
+                  disabled={
+                    !bookingCodeInput ||
+                    isRetrievingBooking ||
+                    isSubmitting ||
+                    isBooking
+                  }
+                  onClick={() => retrieveBooking(bookingCodeInput)}
+                >
+                  {isRetrievingBooking ? "Loading..." : "Load"}
+                </button>
+              </div>
+            </div>
 
           </div>
         </div>
