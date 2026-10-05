@@ -5,6 +5,7 @@ import "@/public/scss/style.scss";
 import MainFooter from "@/components/Shared/MainFooter";
 import FooterCard from "@/components/Shared/FooterCard";
 import SportsbookShell from "@/components/Shared/SportsbookShell";
+import SmartbetTopBar from "@/components/Shared/SmartbetTopBar";
 import { AuthProvider } from "@/src/auth/AuthProvider";
 import { AccountProvider } from "@/src/account/AccountProvider";
 import { OnlineSettingsProvider } from "@/src/settings/OnlineSettingsProvider";
@@ -32,6 +33,7 @@ export default function RootLayout({
               <ActiveMatchesProvider>
                 <PrematchBetslipProvider>
                   <main className="sportsbook-app">
+                    <SmartbetTopBar />
                     <SportsbookShell betslip={<FooterCard />}>
                       <Suspense fallback={null}>{children}</Suspense>
                       <MainFooter />

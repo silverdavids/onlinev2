@@ -65,6 +65,26 @@ export default function SideNav() {
                         className="ti ti-ticket n5-color fs-five"></i>
                         Tickets</Link>
                 </li>
+                <li className="active">
+                    <Link href="/deposit-guide" className="d-flex align-items-center gap-2"><i
+                        className="ti ti-info-circle n5-color fs-five"></i>
+                        Deposit Guide</Link>
+                </li>
+                <li className="active">
+                    <Link href="/terms" className="d-flex align-items-center gap-2"><i
+                        className="ti ti-file-text n5-color fs-five"></i>
+                        Terms</Link>
+                </li>
+                <li className="active">
+                    <Link href="/privacy-policy" className="d-flex align-items-center gap-2"><i
+                        className="ti ti-shield-lock n5-color fs-five"></i>
+                        Privacy Policy</Link>
+                </li>
+                <li className="active">
+                    <Link href="/contact" className="d-flex align-items-center gap-2"><i
+                        className="ti ti-headset n5-color fs-five"></i>
+                        Contact</Link>
+                </li>
             </ul>
             <hr className="py-0 my-0" />
             <h5 className="mb-4 mb-md-6 mt-4 mt-md-6">Categories</h5>

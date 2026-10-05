@@ -191,11 +191,16 @@ export const naviTemData = [
   {
     id: 138128,
     linkText: "Contact Us",
-    href: "/cycling",
+    href: "/contact",
   },
   {
     id: 122880,
-    linkText: "My Bonuses",
-    href: "/promotions",
+    linkText: "Deposit Guide",
+    href: "/deposit-guide",
+  },
+  {
+    id: 122881,
+    linkText: "Terms",
+    href: "/terms",
   },
 ];

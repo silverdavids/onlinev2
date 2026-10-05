@@ -1,192 +1,220 @@
 .sportsbook-app {
-  --site-header-height: 112px;
-  --site-sidebar-width: 284px;
-  --site-content-offset: 303px;
-  --sportsbook-betslip-width: 360px;
+  --site-header-height: 120px;
+  --sportsbook-max-width: 1252px;
+  --sportsbook-betslip-width: 392px;
+  background: #03111f;
+  color: #f8fafc;
   min-width: 0;
+  min-height: 100vh;
   overflow-x: clip;
 }
 
-.sportsbook-app .header-section2 {
-  left: 0;
-  right: 0;
-  width: auto;
+body {
+  background: #03111f;
 }
 
-.sportsbook-app .header-section2 .navbar {
-  width: auto;
-  margin-left: var(--site-content-offset);
-  margin-right: 0;
+.smartbet-topbar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1050;
+  background: linear-gradient(110deg, #041423, #0c2537);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
 }
 
-.sportsbook-app .left-nav-area {
-  left: 0;
-  top: 0;
-  width: var(--site-sidebar-width);
-}
-
-.sportsbook-app .left-nav-area .logo-area {
-  left: 0;
-  width: var(--site-sidebar-width);
-  z-index: 5;
-  background: rgba(var(--p2), 1);
-  border-bottom: 1px solid var(--brt1);
-}
-
-.sportsbook-app .nav_aside {
-  height: 100vh;
-  max-height: 100vh;
-  padding-top: var(--site-header-height) !important;
-}
-
-.sportsbook-sport-link {
-  min-width: 0;
-}
-
-.sportsbook-sidebar-leagues {
-  cursor: default !important;
-  padding: 4px 0 8px 28px;
-
-  &:hover {
-    background-color: transparent !important;
-  }
-}
-
-.sportsbook-sidebar-league-search {
-  width: 100%;
-  border: 1px solid var(--brt1);
-  border-radius: 6px;
-  background: rgba(var(--p3), 1);
-  color: rgba(var(--n4), 1);
-  font-size: 13px;
-  line-height: 1.2;
-  padding: 9px 12px;
-  margin: 0 0 10px;
-  outline: 0;
-
-  &:focus {
-    border-color: rgba(53, 195, 30, 0.65);
-    box-shadow: 0 0 0 2px rgba(53, 195, 30, 0.12);
-  }
-}
-
-.sportsbook-sidebar-league-list {
+.smartbet-topbar__inner {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: min(42vh, 360px);
-  overflow-y: auto;
-  padding: 0 4px 0 0;
-  margin: 0;
-  list-style: none;
-
-  li {
-    border-radius: 8px;
-
-    &.is-active {
-      background-color: rgba(var(--n11), 0.92);
-
-      a,
-      li > span {
-        border-color: rgba(53, 195, 30, 0.45);
-      }
-
-      .sportsbook-sidebar-league-dot {
-        background: rgb(var(--g1));
-        box-shadow: 0 0 0 3px rgba(53, 195, 30, 0.14);
-      }
-    }
-  }
-
-  a,
-  li > span {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-    align-items: center;
-    width: 100%;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    background: rgba(var(--p3), 0.42);
-    color: rgba(var(--n4), 1);
-    font-size: 12.5px;
-    line-height: 1.25;
-    padding: 9px 10px;
-    transition:
-      background 0.18s linear,
-      border-color 0.18s linear;
-
-    &:hover {
-      border-color: rgba(var(--brt1), 1);
-      background: rgba(var(--n11), 0.65);
-    }
-  }
-
-  .sportsbook-sidebar-league-name {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .sportsbook-sidebar-league-dot {
-    flex: 0 0 6px;
-    width: 6px;
-    height: 6px;
-    margin-top: 5px;
-    border-radius: 50%;
-    background: rgba(var(--n5), 0.6);
-  }
-
-  .sportsbook-sidebar-league-count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 28px;
-    border-radius: 999px;
-    background: rgba(15, 27, 66, 0.68);
-    color: rgba(var(--n5), 1);
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    padding: 3px 7px;
-  }
+  align-items: center;
+  gap: 14px;
+  width: min(var(--sportsbook-max-width), calc(100vw - 28px));
+  height: 64px;
+  margin: 0 auto;
 }
 
-.sportsbook-league-toggle {
+.smartbet-wordmark {
+  color: #f8fafc;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.smartbet-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.smartbet-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 22px;
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--brt1);
-  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 8px;
   background: transparent;
-  color: rgba(var(--n5), 1);
-  font-size: 14px;
-  line-height: 1;
+  color: #cbd5e1;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+  }
+}
+
+.smartbet-login {
+  color: #dbe4ee;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.smartbet-join {
+  border: 0;
+  border-radius: 6px;
+  background: #6edb73;
+  color: #06130d;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 9px 16px;
+}
+
+.smartbet-product-strip {
+  position: fixed;
+  inset: 64px 0 auto;
+  z-index: 1040;
+  background: #061827;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.smartbet-product-strip__inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(var(--sportsbook-max-width), calc(100vw - 28px));
+  height: 56px;
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.smartbet-product-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #8ea0b2;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 10px;
+
+  svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  em {
+    color: #607387;
+    font-size: 10px;
+    font-style: normal;
+  }
+
+  &:hover,
+  &.is-active {
+    color: #6edb73;
+    border-bottom-color: #6edb73;
+  }
+
+  &.is-disabled {
+    color: rgba(142, 160, 178, 0.55);
+    cursor: default;
+  }
+}
+
+.smartbet-menu-panel {
+  position: fixed;
+  inset: 64px auto auto max(14px, calc((100vw - var(--sportsbook-max-width)) / 2));
+  z-index: 1060;
+  width: min(320px, calc(100vw - 28px));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 0 0 10px 10px;
+  background: #071b2b;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+}
+
+.smartbet-menu-panel__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+
+  strong {
+    color: #f8fafc;
+    margin-bottom: 10px;
+  }
+
+  a {
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-weight: 700;
+    padding: 10px 12px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+    }
+  }
+}
+
+.sportsbook-app .header-section2,
+.sportsbook-app .left-nav-area,
+.sportsbook-app .middle-iconfixed {
+  display: none !important;
 }
 
 .sportsbook-shell {
-  width: calc(100% - var(--site-content-offset));
-  min-height: calc(100vh - var(--site-header-height));
-  margin-left: var(--site-content-offset);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--sportsbook-betslip-width);
+  gap: 12px;
+  width: min(var(--sportsbook-max-width), calc(100vw - 28px));
+  height: calc(100vh - var(--site-header-height));
+  margin: 0 auto;
   padding-top: var(--site-header-height);
   min-width: 0;
-  max-width: none;
+  overflow: hidden;
+}
+
+.sportsbook-shell--empty-slip {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.sportsbook-shell--empty-slip .sportsbook-main {
+  max-width: 100%;
 }
 
 .sportsbook-main {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
-  min-height: calc(100vh - var(--site-header-height));
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px 0 36px;
+  scrollbar-width: none;
 
-  .hero_area__main,
-  .top_matches__main {
-    margin-left: 0;
-    margin-right: 0;
+  &::-webkit-scrollbar {
+    display: none;
   }
 
   .top_matches__main {
@@ -200,14 +228,188 @@
 }
 
 .sportsbook-main > footer {
-  min-width: 0;
-  margin-top: 0;
+  display: none;
 }
 
 .smartbet-home {
   min-width: 0;
-  padding: 28px;
+  padding: 0;
   overflow: hidden;
+}
+
+.smartbet-reference-home {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.smartbet-promo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 264px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 0 0 64px;
+
+  p {
+    color: #6edb73;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    max-width: 620px;
+    color: #ffffff;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 900;
+    line-height: 1.05;
+    margin: 24px 0 20px;
+    padding: 0 32px;
+  }
+
+  > p,
+  > span {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  > span {
+    color: #c0ccd8;
+    font-size: 20px;
+  }
+
+  > a {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 32px;
+    background: #6edb73;
+    color: #06130d;
+    font-size: 22px;
+    font-weight: 900;
+    margin-top: 28px;
+    padding: 0 32px;
+  }
+}
+
+.smartbet-promo__controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: rgba(255, 255, 255, 0.14);
+    color: #cbd5e1;
+  }
+
+  > button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+  }
+
+  div {
+    display: flex;
+    gap: 10px;
+
+    button {
+      width: 12px;
+      height: 10px;
+      border-radius: 999px;
+      padding: 0;
+
+      &.is-active {
+        width: 38px;
+        background: #6edb73;
+      }
+    }
+  }
+}
+
+.smartbet-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #f8fafc;
+    font-size: 26px;
+    font-weight: 900;
+    margin: 0;
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+    color: #6edb73;
+  }
+
+  a {
+    color: #6edb73;
+    font-size: 16px;
+    font-weight: 900;
+  }
+}
+
+.smartbet-league-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  a {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 999px;
+    background: #071b2b;
+    color: #f8fafc;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+    padding: 12px 20px;
+
+    &:hover {
+      border-color: rgba(110, 219, 115, 0.6);
+      color: #6edb73;
+    }
+  }
+}
+
+.smartbet-empty-card {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 170px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 6px;
+  background: #071b2b;
+  color: #8ea0b2;
+  text-align: center;
+  padding: 24px;
+
+  svg {
+    width: 38px;
+    height: 38px;
+  }
+
+  strong {
+    color: #f8fafc;
+  }
 }
 
 .featured-matches-slider {
@@ -856,5 +1058,572 @@
 
   .prematch-preview-selection__label {
     font-size: 11px;
+  }
+}
+
+/* Reference UI overrides: keep these last so legacy template rules cannot re-float the shell. */
+.sportsbook-betslip {
+  min-width: 0;
+  height: calc(100vh - var(--site-header-height) - 32px);
+  padding: 16px 0 0;
+  pointer-events: auto;
+
+  .fixed_footer {
+    position: static !important;
+    display: flex;
+    flex-direction: column;
+    width: 100% !important;
+    height: 100%;
+    max-height: none !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 6px !important;
+    background: #071b2b !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    transform: none !important;
+  }
+
+  .fixed_footer__head {
+    flex: 0 0 auto;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 0 !important;
+    background: linear-gradient(110deg, #041423, #0c2537);
+    cursor: default;
+    padding: 20px 24px !important;
+  }
+
+  .fixed_footer__head-betslip {
+    span:first-child {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+    }
+  }
+
+  .fixed_footer__head-n1,
+  .fixed_footer__head-quickbet,
+  .footfixedbtn {
+    display: none !important;
+  }
+
+  .fixed_footer__content {
+    flex: 1 1 auto;
+    max-height: none !important;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .fixed_footer__content-live {
+    min-height: 100%;
+  }
+
+  .sportsbook-betslip-empty {
+    display: grid;
+    place-items: center;
+    min-height: 60vh;
+    border: 0;
+    color: #8ea0b2;
+    text-align: center;
+
+    h6 {
+      color: #ffffff;
+      font-size: 18px;
+      margin: 0 !important;
+    }
+  }
+}
+
+.smartbet-reference-home {
+  .top_matches {
+    padding-bottom: 0;
+  }
+
+  .top_matches__title {
+    h3 {
+      color: #f8fafc;
+      font-size: 26px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    img {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .top_matches__cmncard {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 6px !important;
+    background: #071b2b !important;
+    margin-bottom: 12px !important;
+    padding: 24px !important;
+  }
+
+  .prematch-fixture-preview__market-title {
+    border-bottom-color: rgba(148, 163, 184, 0.16);
+  }
+
+  .prematch-preview-selection {
+    border-radius: 5px !important;
+    background: #14283a !important;
+
+    &:hover {
+      background: #6edb73 !important;
+      color: #06130d !important;
+    }
+  }
+}
+
+@media (max-width: 1023px) {
+  .sportsbook-app {
+    --site-header-height: 120px;
+  }
+
+  .sportsbook-shell {
+    display: block;
+    width: min(var(--sportsbook-max-width), calc(100vw - 24px));
+    height: auto;
+    overflow: visible;
+  }
+
+  .sportsbook-main {
+    height: auto;
+    overflow: visible;
+  }
+
+  .sportsbook-betslip {
+    position: fixed;
+    inset: auto 12px 0;
+    z-index: 1080;
+    height: auto;
+    padding: 0;
+
+    .fixed_footer {
+      max-height: min(72vh, 560px) !important;
+      transform: translateY(calc(100% - 64px)) !important;
+      transition: transform 0.22s ease;
+    }
+
+    .fixed_footer.is-open,
+    .fixed_footer.expandedtexta {
+      transform: translateY(0) !important;
+    }
+
+    .fixed_footer__head {
+      cursor: pointer;
+    }
+
+    .footfixedbtn {
+      display: inline-flex !important;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .smartbet-wordmark {
+    font-size: 20px;
+  }
+
+  .smartbet-login,
+  .smartbet-topbar__actions > .smartbet-icon-button:first-child {
+    display: none;
+  }
+
+  .smartbet-product-strip__inner {
+    width: 100%;
+    padding: 0 10px;
+  }
+
+  .smartbet-promo {
+    min-height: 230px;
+
+    h1 {
+      padding: 0 20px;
+    }
+
+    > p,
+    > span,
+    > a {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+  }
+
+  .smartbet-league-pills a {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+}
+
+/* Usability polish for the compact SMARTBET shell. */
+.sportsbook-app {
+  font-size: 15px;
+}
+
+.sportsbook-main {
+  .hero_area__main,
+  .top_matches__main {
+    margin: 0 !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    letter-spacing: 0;
+  }
+
+  h3 {
+    font-size: clamp(22px, 2vw, 28px);
+    line-height: 1.2;
+  }
+
+  h5 {
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  p,
+  span,
+  label,
+  input,
+  button,
+  a,
+  td,
+  th {
+    letter-spacing: 0;
+  }
+}
+
+.smartbet-topbar__inner {
+  height: 60px;
+}
+
+.smartbet-product-strip {
+  inset: 60px 0 auto;
+}
+
+.smartbet-product-strip__inner,
+.smartbet-product-link {
+  height: 52px;
+}
+
+.smartbet-wordmark {
+  font-size: 22px;
+}
+
+.smartbet-product-link {
+  gap: 8px;
+  font-size: 14px;
+  padding: 0 8px;
+
+  svg {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+.smartbet-login,
+.smartbet-join {
+  font-size: 14px;
+}
+
+.smartbet-promo {
+  min-height: 220px;
+
+  h1 {
+    font-size: clamp(30px, 3.2vw, 42px);
+    margin: 18px 0 14px;
+  }
+
+  > span {
+    font-size: 17px;
+  }
+
+  > a {
+    font-size: 18px;
+  }
+}
+
+.smartbet-section-head {
+  h2 {
+    font-size: 22px;
+  }
+
+  a {
+    font-size: 14px;
+  }
+}
+
+.smartbet-league-pills a {
+  font-size: 15px;
+  padding: 10px 16px;
+}
+
+.sportsbook-main .login_section,
+.sportsbook-main .pay_method {
+  min-height: 100%;
+  padding: 0 0 40px !important;
+  background: transparent !important;
+}
+
+.sportsbook-main .login_section {
+  display: flex;
+  align-items: flex-start;
+
+  .container-fluid {
+    width: 100%;
+    padding: 0;
+  }
+
+  .row {
+    justify-content: center !important;
+    margin: 0;
+  }
+
+  .row > .col-6 {
+    display: none;
+  }
+
+  .col-lg-6,
+  .col-xl-5,
+  .col-xxl-10 {
+    width: 100%;
+    max-width: 560px;
+    padding: 0;
+  }
+
+  .login_section__loginarea {
+    width: 100%;
+  }
+
+  .login_section__loginarea > .row {
+    display: block;
+  }
+
+  .login_section__loginarea .pb-10 {
+    margin: 0 !important;
+    padding: 28px !important;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 8px;
+    background: #071b2b;
+  }
+
+  h3 {
+    color: #f8fafc;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 10px !important;
+  }
+
+  p {
+    color: #9fb0c1;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 22px !important;
+  }
+
+  .login_section__form {
+    form > div {
+      margin-bottom: 14px !important;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"] {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 6px;
+      background: #102437 !important;
+      color: #f8fafc;
+      font-size: 14px;
+      line-height: 1.2;
+      padding: 0 14px;
+      outline: 0;
+
+      &:focus {
+        border-color: rgba(110, 219, 115, 0.75);
+        box-shadow: 0 0 0 3px rgba(110, 219, 115, 0.12);
+      }
+    }
+
+    input[type="checkbox"] {
+      flex: 0 0 18px;
+      width: 18px;
+      height: 18px;
+      accent-color: #6edb73;
+    }
+
+    .cmn-btn {
+      min-height: 46px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 18px !important;
+      padding: 0 18px !important;
+    }
+  }
+
+  .login_section__socialmedia {
+    margin-bottom: 18px !important;
+
+    > span {
+      display: block;
+      color: #8ea0b2;
+      font-size: 13px;
+      margin-bottom: 12px !important;
+    }
+  }
+
+  .login_section__social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 50% !important;
+    padding: 0 !important;
+  }
+
+  .d-center.gap-1,
+  .d-flex span {
+    color: #cbd5e1;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+
+.sportsbook-main .pay_method {
+  .container-fluid,
+  .row,
+  .col-12 {
+    padding: 0;
+    margin: 0;
+  }
+
+  .pay_method__paymethod,
+  .pay_method__tabletwo {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 8px !important;
+    background: #071b2b !important;
+    margin-bottom: 16px !important;
+    padding: 22px !important;
+  }
+
+  .pay_method__paymethod-title {
+    h5 {
+      color: #f8fafc;
+      font-size: 19px;
+      font-weight: 800;
+      margin: 0;
+    }
+  }
+
+  label {
+    color: #dbe4ee;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .pay_method__formarea {
+    max-width: 520px;
+  }
+
+  .pay_method__formarea .d-flex {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 6px !important;
+    background: #102437 !important;
+    margin-bottom: 16px !important;
+  }
+
+  input {
+    min-height: 46px;
+    border: 0;
+    background: transparent;
+    color: #f8fafc;
+    font-size: 14px;
+    padding: 0 14px;
+    outline: 0;
+  }
+
+  button {
+    min-height: 44px;
+    border-radius: 6px !important;
+    border: 0;
+    font-size: 14px;
+    padding: 0 18px !important;
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+
+    th {
+      color: #9fb0c1;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 14px 12px;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: #e5edf6;
+      font-size: 13px;
+      padding: 14px 12px;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+    }
+  }
+}
+
+@media (max-width: 1023px) {
+  .sportsbook-app {
+    --site-header-height: 112px;
+  }
+
+  .sportsbook-main .login_section .login_section__loginarea .pb-10 {
+    padding: 22px !important;
+  }
+}
+
+@media (max-width: 575px) {
+  .smartbet-topbar__inner {
+    width: calc(100vw - 20px);
+    gap: 8px;
+  }
+
+  .smartbet-wordmark {
+    font-size: 18px;
+  }
+
+  .smartbet-join {
+    padding: 8px 10px;
+  }
+
+  .smartbet-promo {
+    min-height: 210px;
+
+    h1 {
+      font-size: 27px;
+      line-height: 1.12;
+    }
+
+    > span,
+    > a {
+      font-size: 15px;
+    }
+  }
+
+  .sportsbook-main .login_section .login_section__loginarea .pb-10,
+  .sportsbook-main .pay_method .pay_method__paymethod,
+  .sportsbook-main .pay_method .pay_method__tabletwo {
+    padding: 18px !important;
   }
 }

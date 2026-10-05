@@ -21,7 +21,7 @@ export default function MainFooter() {
                                         <ul className="d-flex flex-column gap-5">
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
-                                                <Link className="fs-ten n4-color" href="#">Deposits &amp; Withdrawals</Link>
+                                                <Link className="fs-ten n4-color" href="/deposit-guide">Deposits &amp; Withdrawals</Link>
                                             </li>
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
@@ -94,19 +94,19 @@ export default function MainFooter() {
                                         <ul className="d-flex flex-column gap-5">
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
-                                                <Link className="fs-ten n4-color" href="#">About Us</Link>
+                                                <Link className="fs-ten n4-color" href="/contact">About Us</Link>
                                             </li>
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
-                                                <Link className="fs-ten n4-color" href="#">Contact us</Link>
+                                                <Link className="fs-ten n4-color" href="/contact">Contact us</Link>
                                             </li>
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
-                                                <Link className="fs-ten n4-color" href="#">Cooperation</Link>
+                                                <Link className="fs-ten n4-color" href="/contact">Cooperation</Link>
                                             </li>
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
-                                                <Link className="fs-ten n4-color" href="#">Terms &amp; Conditions</Link>
+                                                <Link className="fs-ten n4-color" href="/terms-and-conditions">Terms &amp; Conditions</Link>
                                             </li>
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
@@ -114,11 +114,11 @@ export default function MainFooter() {
                                             </li>
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
-                                                <Link className="fs-ten n4-color" href="#">Help</Link>
+                                                <Link className="fs-ten n4-color" href="/contact">Help</Link>
                                             </li>
                                             <li className="iconstyle d-flex align-items-center">
                                                 <IconArrowBadgeRight className="fs-five rtawin" />
-                                                <Link className="fs-ten n4-color" href="#">Privacy Policy</Link>
+                                                <Link className="fs-ten n4-color" href="/privacy-policy">Privacy Policy</Link>
                                             </li>
                                         </ul>
                                     </div>
