@@ -243,7 +243,11 @@
 
 @media (max-width: 1023px) {
   .sportsbook-shell--empty-slip .sportsbook-betslip { display: none; }
+  // The translated slip leaves its container over the games behind it.
+  // Only the visible slip should receive taps, not that empty container.
+  .sportsbook-betslip { pointer-events: none; }
   .sportsbook-betslip .smartbet-slip {
+    pointer-events: auto;
     min-height: 0;
     .fixed_footer__head { min-height: 64px; display: flex; align-items: center; }
     .fixed_footer__head > div { width: 100%; }

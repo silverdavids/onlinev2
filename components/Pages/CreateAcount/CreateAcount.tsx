@@ -212,6 +212,7 @@ export default function CreateAccount() {
                                                     <input 
                                                         className="n11-bg" 
                                                         name="phone_number" 
+                                                        autoComplete="tel"
                                                         placeholder="Phone Number (e.g., +256xxxxxxxxx)"
                                                         type="tel" 
                                                         value={formData.phone_number}
@@ -223,6 +224,7 @@ export default function CreateAccount() {
                                                     <input 
                                                         className="n11-bg" 
                                                         name="email" 
+                                                        autoComplete="email"
                                                         placeholder="Email Address"
                                                         type="email" 
                                                         value={formData.email}
@@ -284,6 +286,7 @@ export default function CreateAccount() {
                                                     <input
                                                         className="n11-bg"
                                                         name="otpCode"
+                                                        autoComplete="one-time-code"
                                                         placeholder="OTP Code"
                                                         type="text"
                                                         inputMode="numeric"
@@ -296,6 +299,7 @@ export default function CreateAccount() {
                                                     <input
                                                         className="n11-bg"
                                                         name="newPassword"
+                                                        autoComplete="new-password"
                                                         placeholder="Create Password"
                                                         type="password"
                                                         value={otpData.newPassword}
@@ -307,6 +311,7 @@ export default function CreateAccount() {
                                                     <input
                                                         className="n11-bg"
                                                         name="confirmPassword"
+                                                        autoComplete="new-password"
                                                         placeholder="Confirm Password"
                                                         type="password"
                                                         value={otpData.confirmPassword}

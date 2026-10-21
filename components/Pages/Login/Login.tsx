@@ -106,7 +106,8 @@ export default function Login() {
                                                         className="n11-bg" 
                                                         name="username" 
                                                         placeholder="Mobile number"
-                                                        type="text" 
+                                                        type="tel"
+                                                        autoComplete="username"
                                                         id="Input" 
                                                         value={formData.username}
                                                         onChange={handleChange}
@@ -119,6 +120,7 @@ export default function Login() {
                                                         name="password" 
                                                         placeholder="Password"
                                                         type="password" 
+                                                        autoComplete="current-password"
                                                         id="Input-Password" 
                                                         value={formData.password}
                                                         onChange={handleChange}
