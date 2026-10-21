@@ -1,12 +1,14 @@
 {
   "name": "smart-bet",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test": "node --test tests"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.18",

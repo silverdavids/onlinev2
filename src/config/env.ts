@@ -47,7 +47,17 @@ export const matchesApiConfig = {
   refreshIntervalMs: 5 * 60 * 1000,
 };
 
-export const getApiBaseUrl = (): string => apiConfig.baseUrl;
+export const getApiBaseUrl = (): string => {
+  // The production site proxies /api to the cookie-authenticated WebUI.
+  // Match the legacy client: never send its account requests to another host.
+  if (
+    typeof window !== "undefined" &&
+    /(^|\.)smartbet\.ug$/i.test(window.location.hostname)
+  ) {
+    return "";
+  }
+  return apiConfig.baseUrl;
+};
 
 export const getMatchesApiBaseUrl = (): string => matchesApiConfig.baseUrl;
 

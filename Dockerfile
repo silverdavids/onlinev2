@@ -13,7 +13,8 @@ WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
-ARG NEXT_PUBLIC_API_BASE_URL
+# Empty uses the site's existing /api reverse proxy.
+ARG NEXT_PUBLIC_API_BASE_URL=
 ARG NEXT_PUBLIC_API_PATH_PREFIX=api
 ARG NEXT_PUBLIC_API_TIMEOUT_MS=20000
 ARG NEXT_PUBLIC_API_WITH_CREDENTIALS=true
