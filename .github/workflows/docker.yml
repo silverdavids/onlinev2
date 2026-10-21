@@ -33,7 +33,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/silverdavids/onlinev2:0.1.3
+          tags: ghcr.io/silverdavids/onlinev2:0.1.4
           build-args: |
             NEXT_PUBLIC_API_BASE_URL=https://shop.smartbet.net
             NEXT_PUBLIC_API_PATH_PREFIX=api
