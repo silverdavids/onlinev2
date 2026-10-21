@@ -27,7 +27,7 @@
             @include maxQuery(991) {
                 @include box(50);
             }
-            background-color: rgb(var(--n11));
+            background-color: var(--odds);
             .footericon {
                 color: #1FBCEE;
                 width: 31px;
@@ -123,13 +123,13 @@
     }
 
     &__head {
-        background-color: rgb(var(--g1));
+        background-color: var(--accent);
         border-radius: 20px 20px 0 0;
 
         &-n1 {
             @include box(20);
-            background-color: rgb(var(--n7));
-            color: rgb(var(--g1));
+            background-color: var(--foreground);
+            color: var(--accent);
             font-weight: 600;
         }
 
@@ -145,7 +145,7 @@
                 text-indent: -9999px;
                 width: 44px;
                 height: 24px;
-                background: rgb(var(--g1));
+                background: var(--accent);
                 display: block;
                 border-radius: 100px;
                 position: relative;
@@ -165,7 +165,7 @@
             }
 
             input:checked+label {
-                background: rgb(var(--g1));
+                background: var(--accent);
             }
 
             input:checked+label:after {
@@ -207,7 +207,7 @@
             width: 33.333%;
             position: absolute;
             bottom: 0;
-            // background-color: rgb(var(--n11));
+            // background-color: var(--odds);
             transition: .3s;
             z-index: -1;
         }
@@ -258,7 +258,7 @@
         }
 
         &-scr {
-            background-color: rgb(var(--g1), 0.40);
+            background-color: color-mix(in oklab, var(--accent) 40%, transparent);
         }
 
         &-formarea {
@@ -275,12 +275,12 @@
                 transition: 0.5s;
 
                 &:hover {
-                    background: rgba(53, 195, 30, 0.50);
+                    background: color-mix(in oklab, var(--accent) 50%, transparent);
                 }
             }
 
             // .active {
-            //     background: rgba(53, 195, 30, 0.50);
+            //     background: color-mix(in oklab, var(--accent) 50%, transparent);
             // }
         }
 

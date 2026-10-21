@@ -1,0 +1,252 @@
+// Bet slip dimensions and spacing follow the supplied template's SlipBody.
+.betslip-response.alert {
+  --response-color: #055160;
+  background: #cff4fc;
+  border: 1px solid #9eeaf9;
+  color: var(--response-color);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+
+  &.alert-success { --response-color: #0a3622; background: #d1e7dd; border-color: #a3cfbb; }
+  &.alert-warning { --response-color: #664d03; background: #fff3cd; border-color: #ffda6a; }
+  &.alert-danger { --response-color: #58151c; background: #f8d7da; border-color: #f1aeb5; }
+  :where(p, span, strong, button, dt, dd) { color: inherit; font-family: inherit; }
+  p { margin: 0; font-size: inherit; line-height: inherit; }
+
+  &.betslip-response--floating {
+    position: fixed;
+    top: max(1rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+    z-index: 2147483647;
+    width: min(25rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem - env(safe-area-inset-top));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin: 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 12px 40px #0005;
+  }
+
+  .betslip-response__heading { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .betslip-response__heading > svg { flex-shrink: 0; }
+  .betslip-response__heading strong { flex: 1; font-size: 0.85rem; }
+  button {
+    border: 1px solid currentColor;
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.5;
+    cursor: pointer;
+    &:hover { background: #0000000d; }
+    &:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+  }
+  .betslip-response__close { display: inline-flex; align-items: center; justify-content: center; border: 0; min-width: 2rem; min-height: 2rem; padding: 0.25rem; }
+  .betslip-response__details { margin: 0.75rem 0 0; }
+  .betslip-response__details > div,
+  .betslip-response__changes > div { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
+  .betslip-response__details dt { font-weight: 500; }
+  .betslip-response__details dd { margin: 0; font-weight: 700; text-align: right; }
+  .betslip-response__changes { margin-top: 0.75rem; max-height: 30dvh; overflow-y: auto; }
+  .betslip-response__changes strong { white-space: nowrap; }
+  .betslip-response__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+  .betslip-response__view { margin-top: 0.75rem; }
+  .betslip-response__hint { margin-top: 0.5rem; font-size: 0.6rem; }
+}
+
+.sportsbook-shell--empty-slip {
+  grid-template-columns: minmax(0, 1fr) var(--sportsbook-betslip-width);
+}
+
+.sportsbook-betslip {
+  align-self: start;
+
+  .smartbet-slip {
+    min-height: calc(100dvh - var(--site-header-height) - 3rem);
+    color: var(--card-foreground);
+
+    .fixed_footer__head {
+      background: var(--gradient-brand);
+      padding: 0.75rem 1rem !important;
+      color: var(--surface-foreground);
+    }
+
+    .fixed_footer__head-betslip span:first-child {
+      color: inherit;
+      font-family: var(--font-display), system-ui, sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .fixed_footer__content { height: auto; }
+    .fixed_footer__content-live { min-height: 0; padding: 0; margin: 0; }
+
+    button { font-family: inherit; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    .sportsbook-betslip-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-height: 14rem;
+      padding: 3rem 1.5rem;
+      border: 0;
+
+      h6 { font-size: 0.7rem; font-weight: 600; }
+      p { color: var(--muted-foreground); font-size: 0.6rem; }
+    }
+  }
+}
+
+.smartbet-slip {
+  &__selection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted-foreground);
+      font-size: 0.6rem;
+      font-weight: 600;
+      &:hover { color: var(--destructive); }
+    }
+  }
+
+  &__selection { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+  &__selection-main { display: flex; align-items: flex-start; gap: 0.75rem; }
+  &__selection-info { flex: 1; min-width: 0; }
+  &__match {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  &__market { display: block; color: var(--muted-foreground); font-size: 0.6rem; line-height: 1.5; }
+  &__market strong { color: var(--foreground); font-weight: 600; }
+  &__odd { font-size: 0.7rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.5; }
+  &__remove { display: inline-flex; padding: 0; border: 0; background: transparent; color: var(--muted-foreground); }
+  &__remove:hover { color: var(--destructive); }
+
+  &__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+    padding: 0.75rem 1rem;
+  }
+
+  &__quick-stakes {
+    display: flex;
+    gap: 0.5rem;
+    button {
+      flex: 1;
+      padding: 0.375rem 0;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      font-size: 0.6rem;
+      font-weight: 700;
+      &[aria-pressed="true"] { background: var(--odds-active); color: var(--odds-active-foreground); }
+    }
+  }
+
+  &__stake {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--input);
+    border-radius: var(--radius);
+    color: var(--muted-foreground);
+    font-size: 0.6rem;
+    font-weight: 600;
+    > span { color: var(--muted-foreground); font-weight: 600; }
+    &:focus-within { outline: 2px solid var(--ring); }
+    input {
+      width: 7rem;
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--foreground);
+      text-align: right;
+      font-size: 0.7rem;
+      font-weight: 700;
+      outline: none;
+    }
+  }
+
+  &__total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--muted-foreground);
+    font-weight: 600;
+    span { color: var(--muted-foreground); font-size: 0.6rem; font-weight: 600; }
+    strong { color: var(--foreground); font-size: 0.7rem; font-weight: 700; }
+  }
+  &__potential strong { color: var(--accent); }
+  &__actions { display: flex; flex-direction: column; gap: 0.75rem; }
+  &__actions button {
+    width: 100%;
+    border: 1px solid var(--input);
+    border-radius: var(--radius);
+    padding: 0.625rem 0;
+    background: transparent;
+    color: var(--foreground);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+  &__actions &__place {
+    border-color: transparent;
+    padding: 0.75rem 0;
+    background: var(--accent);
+    color: var(--accent-foreground);
+    font-size: 0.7rem;
+  }
+  &__book:hover:enabled { background: var(--muted); }
+  &__place:hover:enabled { opacity: 0.9; }
+  &__load-booking {
+    margin: 0.25rem 1rem 1rem;
+    color: var(--muted-foreground);
+    font-size: 0.6rem;
+    summary { cursor: pointer; margin-bottom: 0.5rem; }
+  }
+}
+
+@media (max-width: 1023px) {
+  .sportsbook-shell--empty-slip .sportsbook-betslip { display: none; }
+  .sportsbook-betslip .smartbet-slip {
+    min-height: 0;
+    .fixed_footer__head { min-height: 64px; display: flex; align-items: center; }
+    .fixed_footer__head > div { width: 100%; }
+    .fixed_footer__head-n1 { display: inline-flex !important; }
+  }
+}

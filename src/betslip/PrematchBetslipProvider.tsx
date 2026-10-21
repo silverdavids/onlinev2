@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -36,6 +37,10 @@ import type {
 
 const STORAGE_KEY = "smartbet.prematchBetslip.v1";
 const BOOKING_EXPIRY_MINUTES = 30;
+const BOOKING_ODDS_CHANGED_MESSAGE =
+  "Odds changed. Review the highlighted changes, then accept them before saving the booking.";
+const PLACEMENT_ODDS_CHANGED_MESSAGE =
+  "Odds changed. Review the highlighted changes, then accept them before placing the ticket.";
 
 export type BetslipSelectionStatus = "active" | "suspended";
 export type BetslipSelectionKind = "prematch" | "live";
@@ -105,6 +110,8 @@ export type BetslipChangedOdd = {
   key: string | null;
   matchId: number | null;
   matchOddId: number | null;
+  bookmakerId: number | null;
+  shortCode: number | null;
   market: string;
   option: string;
   line: string | null;
@@ -122,6 +129,7 @@ type PrematchBetslipContextValue = {
   potentialWin: number;
   validation: BetslipValidationState;
   serverMessage: string | null;
+  serverResponseId: number;
   isSubmitting: boolean;
   isBooking: boolean;
   isRetrievingBooking: boolean;
@@ -441,6 +449,13 @@ const getChangedOddValue = <T,>(
   return change[camelKey] as T | undefined;
 };
 
+const getChangedOddBookmakerId = (
+  change: TicketChangedOddDto
+): number | null =>
+  getChangedOddValue<number | null>(change, "BookMakerId", "bookMakerId") ??
+  change.bookmakerId ??
+  null;
+
 const getTicketResultValue = <T,>(
   result: TicketResultDto,
   pascalKey: keyof TicketResultDto,
@@ -564,6 +579,10 @@ const mapChangedOdds = (
     const matchOddId =
       getChangedOddValue<number | null>(change, "MatchOddId", "matchOddId") ??
       null;
+    const bookmakerId = getChangedOddBookmakerId(change);
+    const shortCode =
+      getChangedOddValue<number | null>(change, "ShortCode", "shortCode") ??
+      null;
     const market =
       getChangedOddValue<string>(change, "BetCategory", "betCategory") ??
       selection?.operational.betCategory ??
@@ -585,6 +604,8 @@ const mapChangedOdds = (
       key: selection?.key ?? null,
       matchId,
       matchOddId,
+      bookmakerId,
+      shortCode,
       market,
       option,
       line:
@@ -872,14 +893,34 @@ const getFeedChangedOdds = (
   Object.entries(selectedByKey).reduce<BetslipChangedOdd[]>(
     (changes, [key, selected]) => {
       const activeSelection = activeSelectionsByKey.get(key);
-      if (!activeSelection || activeSelection.selection.odd === selected.operational.odd) {
+      if (!activeSelection) {
+        return changes;
+      }
+
+      const selectedMatchOddId =
+        selected.operational.matchOddId ??
+        toNullablePositiveInteger(selected.display.matchOddId);
+      const activeMatchOddId = toNullablePositiveInteger(
+        activeSelection.selection.matchOddId
+      );
+      if (
+        selectedMatchOddId !== null &&
+        activeMatchOddId !== null &&
+        selectedMatchOddId !== activeMatchOddId
+      ) {
+        return changes;
+      }
+
+      if (activeSelection.selection.odd === selected.operational.odd) {
         return changes;
       }
 
       changes.push({
         key,
         matchId: selected.operational.matchId,
-        matchOddId: toNullablePositiveInteger(selected.display.matchOddId),
+        matchOddId: activeMatchOddId ?? selectedMatchOddId,
+        bookmakerId: selected.operational.bookmakerId,
+        shortCode: selected.operational.shortCode,
         market: selected.operational.betCategory,
         option: selected.operational.betOption,
         line: selected.operational.line,
@@ -930,7 +971,15 @@ export const PrematchBetslipProvider = ({
     Record<string, SelectedPrematchSelection>
   >({});
   const [stakeInput, setStakeInputState] = useState("");
-  const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const [serverResponse, setServerMessage] = useReducer(
+    (current: { message: string | null; id: number }, message: string | null) => ({
+      message,
+      id: current.id + 1,
+    }),
+    { message: null, id: 0 }
+  );
+  const serverMessage = serverResponse.message;
+  const serverResponseId = serverResponse.id;
   const [changedOdds, setChangedOdds] = useState<BetslipChangedOdd[]>([]);
   const [receipt, setReceipt] = useState<BetslipReceiptState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -993,6 +1042,18 @@ export const PrematchBetslipProvider = ({
         }
 
         const { fixture, selection } = activeSelection;
+        const selectedMatchOddId =
+          existing.operational.matchOddId ??
+          toNullablePositiveInteger(existing.display.matchOddId);
+        const activeMatchOddId = toNullablePositiveInteger(selection.matchOddId);
+        if (
+          selectedMatchOddId !== null &&
+          activeMatchOddId !== null &&
+          selectedMatchOddId !== activeMatchOddId
+        ) {
+          return;
+        }
+
         const nextMatchId = getFixtureMatchId(fixture);
         const nextSetNo = toPositiveInteger(fixture.setNo);
         const nextBookmakerId = toPositiveInteger(selection.bookmakerId) ?? 0;
@@ -1026,6 +1087,7 @@ export const PrematchBetslipProvider = ({
               setNo: nextSetNo,
               bookmakerId: nextBookmakerId,
               odd: selection.odd,
+              matchOddId: activeMatchOddId,
               shortCode: nextShortCode,
             },
             previousOdd:
@@ -1358,6 +1420,8 @@ export const PrematchBetslipProvider = ({
                   key,
                   matchId: existing.operational.matchId,
                   matchOddId: toNullablePositiveInteger(option.matchOddId),
+                  bookmakerId: match.bookmakerId,
+                  shortCode: match.shortCode,
                   market: existing.operational.betCategory,
                   option: existing.operational.betOption,
                   line: existing.operational.line,
@@ -1456,7 +1520,7 @@ export const PrematchBetslipProvider = ({
         );
         if (feedChangedOdds.length > 0) {
           setChangedOdds(feedChangedOdds);
-          setServerMessage("Odds changed. Review and accept the new odds before booking.");
+          setServerMessage(BOOKING_ODDS_CHANGED_MESSAGE);
           return;
         }
       } else if (requestSetNo <= 0) {
@@ -1483,7 +1547,7 @@ export const PrematchBetslipProvider = ({
 
       if (resultChangedOdds.length > 0) {
         setChangedOdds(resultChangedOdds);
-        setServerMessage("Odds changed. Review and accept the new odds before booking.");
+        setServerMessage(BOOKING_ODDS_CHANGED_MESSAGE);
         return;
       }
 
@@ -1516,7 +1580,7 @@ export const PrematchBetslipProvider = ({
         expiresInMinutes: BOOKING_EXPIRY_MINUTES,
       });
       setLoadedBookingCode(bookingCode);
-      setServerMessage("Booking saved successfully.");
+      setServerMessage("Booking saved. Use the booking code below within 30 minutes.");
     } catch (error) {
       const apiError = normalizeApiError(error);
       if (apiError instanceof ApiError && apiError.status === 401) {
@@ -1541,7 +1605,7 @@ export const PrematchBetslipProvider = ({
 
       if (resultChangedOdds.length > 0) {
         setChangedOdds(resultChangedOdds);
-        setServerMessage("Odds changed. Review and accept the new odds before booking.");
+        setServerMessage(BOOKING_ODDS_CHANGED_MESSAGE);
         return;
       }
 
@@ -1694,7 +1758,7 @@ export const PrematchBetslipProvider = ({
         );
         if (feedChangedOdds.length > 0) {
           setChangedOdds(feedChangedOdds);
-          setServerMessage("Odds changed. Review and accept the new odds before placing.");
+          setServerMessage(PLACEMENT_ODDS_CHANGED_MESSAGE);
           return;
         }
       } else if (requestSetNo <= 0) {
@@ -1726,7 +1790,7 @@ export const PrematchBetslipProvider = ({
 
       if (resultChangedOdds.length > 0) {
         setChangedOdds(resultChangedOdds);
-        setServerMessage("Odds changed. Review and accept the new odds before placing.");
+        setServerMessage(PLACEMENT_ODDS_CHANGED_MESSAGE);
         return;
       }
 
@@ -1763,6 +1827,10 @@ export const PrematchBetslipProvider = ({
         }
       }
 
+      const hasReceiptDetails = Boolean(
+        nextReceipt?.receiptId || nextReceipt?.ticketNumber || nextReceipt?.serial
+      );
+
       setReceipt(
         nextReceipt ?? {
           ticketNumber: null,
@@ -1780,7 +1848,11 @@ export const PrematchBetslipProvider = ({
       setChangedOdds([]);
       setBookingConfirmation(null);
       setLoadedBookingCode(null);
-      setServerMessage("Ticket placed successfully.");
+      setServerMessage(
+        hasReceiptDetails
+          ? "Ticket placed successfully. Receipt details are shown below."
+          : "Ticket placed successfully. The server accepted the request but did not return receipt details."
+      );
       void refreshAccount().catch(() => undefined);
     } catch (error) {
       const apiError = normalizeApiError(error);
@@ -1806,7 +1878,7 @@ export const PrematchBetslipProvider = ({
 
       if (resultChangedOdds.length > 0) {
         setChangedOdds(resultChangedOdds);
-        setServerMessage("Odds changed. Review and accept the new odds before placing.");
+        setServerMessage(PLACEMENT_ODDS_CHANGED_MESSAGE);
         return;
       }
 
@@ -1848,7 +1920,11 @@ export const PrematchBetslipProvider = ({
           previousOdd: existing.operational.odd,
           operational: {
             ...existing.operational,
+            matchId: change.matchId ?? existing.operational.matchId,
             odd: change.newOdd,
+            bookmakerId: change.bookmakerId ?? existing.operational.bookmakerId,
+            shortCode: change.shortCode ?? existing.operational.shortCode,
+            matchOddId: change.matchOddId ?? existing.operational.matchOddId,
           },
           display: {
             ...existing.display,
@@ -1883,6 +1959,7 @@ export const PrematchBetslipProvider = ({
       potentialWin,
       validation,
       serverMessage,
+      serverResponseId,
       isSubmitting,
       isBooking,
       isRetrievingBooking,
@@ -1926,6 +2003,7 @@ export const PrematchBetslipProvider = ({
       selectedByKey,
       selections,
       serverMessage,
+      serverResponseId,
       setStakeInput,
       stake,
       stakeInput,

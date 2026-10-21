@@ -11,21 +11,14 @@ import { dashboardTabs } from '@/public/data/dashTabs';
 import { useAuth } from '@/src/auth/useAuth';
 import { useAccount } from '@/src/account/useAccount';
 import { formatUgx } from '@/src/account/formatCurrency';
+import Link from 'next/link';
+import { accountLinks } from '@/src/navigation/siteNavigation';
 
 export default function Dashboard() {
-    const [activeItem, setActiveItem] = useState(dashboardTabs[0]);
     const { user, isAuthenticated } = useAuth();
     const { account, balance, isLoadingAccount, accountLoaded, accountError, refreshAccount } = useAccount();
     const balanceDisplay = typeof balance === 'number' ? formatUgx(balance) : 'Unavailable';
 
-    const handleClick = (itemName: any) => {
-        setActiveItem(itemName);
-    };
-    const getItemStyle = (itemName: any) => {
-        return {
-            backgroundColor: activeItem === itemName ? '#0F1B42' : '',
-        };
-    };
 
     // Helper function to extract digits only
     const digitsOnly = (value: string): string => {
@@ -105,12 +98,12 @@ export default function Dashboard() {
 
     return (
         <>
-            <section className="pay_method pb-120">
+            <section className="pay_method smartbet-dashboard pb-120">
                 <div className="container-fluid">
                     <div className="row">
                         <div className="col-12 gx-0 gx-sm-4">
                             <div className="hero_area__main">
-                                <div className="pay_method__paymethod p-4 p-lg-6 p2-bg rounded-8 mb-8 mb-md-10">
+                                <div className="smartbet-dashboard__overview pay_method__paymethod p-4 p-lg-6 p2-bg rounded-8 mb-8 mb-md-10">
                                     <div className="pay_method__paymethod-title d-flex align-items-center justify-content-between gap-3 mb-5 mb-md-6 flex-wrap">
                                         <div className="d-flex align-items-center gap-3">
                                             <IconUser className="ti ti-user fs-four g1-color" />
@@ -133,7 +126,7 @@ export default function Dashboard() {
                                     ) : isLoadingAccount && !accountLoaded ? (
                                         <p className="mb-0 text-white-50">Loading account details...</p>
                                     ) : (
-                                        <div className="row gy-4">
+                                        <div className="smartbet-dashboard__account-grid">
                                             <div className="col-sm-6 col-lg-3">
                                                 <span className="fs-seven text-white-50 d-block mb-1">Username</span>
                                                 <span className="fw-bold n10-color text-break">{user?.username ?? 'Unavailable'}</span>
@@ -153,15 +146,18 @@ export default function Dashboard() {
                                         </div>
                                     )}
                                 </div>
+                                <nav className="smartbet-account-nav" aria-label="Account navigation">
+                                    {accountLinks.filter((link) => link.href !== '/dashboard').map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
+                                </nav>
                                 <Tab.Group>
-                                    <div className="row gy-6 gy-xxl-0 singletab">
-                                        <div className="col-xxl-3">
+                                    <div className="smartbet-dashboard__workspace singletab">
+                                        <div className="smartbet-dashboard__navigation">
                                             <div className="pay_method__scrol">
                                                 <Tab.List
-                                                    className="tablinks pay_method__scrollbar p2-bg p-5 p-md-6 rounded-4 d-flex align-items-center justify-content-center flex-xxl-column gap-3 gap-xxl-2">
+                                                    aria-label="Account sections"
+                                                    className="smartbet-dashboard__tabs">
                                                     {dashboardTabs.map((singleTabs) => (
-                                                        <Tab onClick={() => handleClick(singleTabs)}
-                                                            style={getItemStyle(singleTabs)} className="nav-links p-3 rounded-3 cpoint d-inline-block outstles" key={singleTabs.id}>
+                                                        <Tab className={({ selected }) => `smartbet-dashboard__tab${selected ? ' is-active' : ''}`} key={singleTabs.id}>
                                                             <span className="tablink d-flex align-items-center gap-2 outstles">
                                                                 {singleTabs.icon}
                                                                 {singleTabs.tabname}
@@ -172,7 +168,7 @@ export default function Dashboard() {
                                                 </Tab.List>
                                             </div>
                                         </div>
-                                        <div className="col-xxl-9">
+                                        <div className="smartbet-dashboard__panels">
                                             <Tab.Panels className="tabcontents">
                                                 <Tab.Panel>
                                                     <div className="pay_method__paymethod p-4 p-lg-6 p2-bg rounded-8 mb-8 mb-md-10">
@@ -182,7 +178,7 @@ export default function Dashboard() {
                                                             <h5 className="n10-color">Payment methods</h5>
                                                         </div>
                                                         <div className="pay_method__paymethod-alitem">
-                                                            <div className="row gx-4 gy-4">
+                                                            <div className="smartbet-dashboard__methods">
                                                                 <DepositCard />
                                                             </div>
                                                         </div>
@@ -197,7 +193,7 @@ export default function Dashboard() {
                                                             <h5 className="n10-color">Payment methods</h5>
                                                         </div>
                                                         <div className="pay_method__paymethod-alitem">
-                                                            <div className="row gx-4 gy-4">
+                                                            <div className="smartbet-dashboard__methods">
                                                                 <DepositCard />
                                                             </div>
                                                         </div>
@@ -224,9 +220,9 @@ export default function Dashboard() {
                                                                     borderRadius: '6px',
                                                                     marginBottom: '20px',
                                                                     fontWeight: '600',
-                                                                    backgroundColor: feedback.type === 'success' ? '#d4edda' : '#f8d7da',
-                                                                    color: feedback.type === 'success' ? '#155724' : '#721c24',
-                                                                    border: `1px solid ${feedback.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`
+                                                                    backgroundColor: feedback.type === 'success' ? 'color-mix(in oklab, var(--accent) 12%, var(--card))' : 'color-mix(in oklab, var(--destructive) 12%, var(--card))',
+                                                                    color: feedback.type === 'success' ? 'var(--foreground)' : 'var(--foreground)',
+                                                                    border: `1px solid ${feedback.type === 'success' ? 'var(--accent)' : 'var(--destructive)'}`
                                                                 }}>
                                                                     {feedback.text}
                                                                 </div>

@@ -54,7 +54,7 @@ export default function DepositAmount() {
 
     const getItemStyle = (item: any) => {
         return {
-            border: `1px solid ${activeItem?.id === item.id ? '#35C31E' : '#2C3655'}`,
+            border: `1px solid ${activeItem?.id === item.id ? 'var(--accent)' : 'var(--border)'}`,
             cursor: 'pointer'
         };
     };
@@ -153,9 +153,9 @@ export default function DepositAmount() {
                     borderRadius: '6px',
                     marginBottom: '20px',
                     fontWeight: '600',
-                    backgroundColor: feedback.type === 'success' ? '#d4edda' : '#f8d7da',
-                    color: feedback.type === 'success' ? '#155724' : '#721c24',
-                    border: `1px solid ${feedback.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`
+                    backgroundColor: feedback.type === 'success' ? 'color-mix(in oklab, var(--accent) 12%, var(--card))' : 'color-mix(in oklab, var(--destructive) 12%, var(--card))',
+                    color: feedback.type === 'success' ? 'var(--foreground)' : 'var(--foreground)',
+                    border: `1px solid ${feedback.type === 'success' ? 'var(--accent)' : 'var(--destructive)'}`
                 }}>
                     {feedback.text}
                 </div>

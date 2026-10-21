@@ -119,12 +119,9 @@ const SelectionCell = ({
     className="top_matches__innercount-item prematch-preview-selection clickable-active py-2 px-3 rounded-3 n11-bg text-center border-0"
     onClick={onSelect}
     disabled={!odd}
+    aria-pressed={isSelected}
     title={label}
     type="button"
-    style={{
-      outline: isSelected ? "2px solid #35C31E" : undefined,
-      backgroundColor: isSelected ? "#12351f" : undefined,
-    }}
   >
     <span className="prematch-preview-selection__label fs-seven d-block mb-2">
       {label ?? "-"}

@@ -213,6 +213,7 @@ export default function PrematchFixtureDetails({
                                   className="top_matches__innercount-item clickable-active py-2 px-6 rounded-3 n11-bg text-center border-0"
                                   key={selection.matchOddId}
                                   data-selection-id={selection.matchOddId}
+                                  aria-pressed={isSelected(selection.matchOddId)}
                                   onClick={() =>
                                     toggleSelection(
                                       fixture,
@@ -226,16 +227,6 @@ export default function PrematchFixtureDetails({
                                       )
                                     )
                                   }
-                                  style={{
-                                    outline: isSelected(selection.matchOddId)
-                                      ? "2px solid #35C31E"
-                                      : undefined,
-                                    backgroundColor: isSelected(
-                                      selection.matchOddId
-                                    )
-                                      ? "#12351f"
-                                      : undefined,
-                                  }}
                                   type="button"
                                 >
                                   <span className="fs-seven d-block mb-2 text-nowrap">

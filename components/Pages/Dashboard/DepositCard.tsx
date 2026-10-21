@@ -11,18 +11,18 @@ export default function DepositCard() {
     };
     const getItemStyle = (itemName: any) => {
         return {
-            border: `1px solid ${activeItem === itemName ? '#35C31E' : '#2C3655'}`,
+            border: `1px solid ${activeItem === itemName ? 'var(--accent)' : 'var(--border)'}`,
         };
     };
     return (
         <>
             {imagesData.map((imagesData) => (
-                <div className="col-6 col-sm-4 col-md-3 col-lg-4 col-xl-3 col-xxl-2" key={imagesData.id}>
-                    <div onClick={() => handleClick(imagesData)}
-                        style={getItemStyle(imagesData)} className="pay_method__paymethod-item pay-methods p-2 rounded-3 cpoint">
+                    <button key={imagesData.id} type="button" onClick={() => handleClick(imagesData)}
+                        aria-pressed={activeItem.id === imagesData.id}
+                        style={getItemStyle(imagesData)} className="smartbet-dashboard__method pay_method__paymethod-item pay-methods">
                         <Image src={imagesData.src} height={70} width={172} alt={imagesData.alt} />
-                    </div>
-                </div>
+                        <span>{imagesData.alt}</span>
+                    </button>
             ))}
         </>
     )

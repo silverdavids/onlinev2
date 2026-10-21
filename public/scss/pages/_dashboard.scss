@@ -1,0 +1,125 @@
+// Account panels size to the available content column, including beside a slip.
+.sportsbook-main .smartbet-dashboard {
+  min-width: 0;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  container-type: inline-size;
+
+  .hero_area__main { min-width: 0; }
+  .pay_method__paymethod,
+  .pay_method__tabletwo {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    border-radius: var(--radius) !important;
+  }
+  .pay_method__paymethod-title {
+    margin-bottom: 1rem !important;
+    h5 { font-size: 0.9rem; line-height: 1.4; }
+    svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+    .cmn-btn { min-height: 2rem; padding: 0.375rem 0.75rem !important; font-size: 0.65rem; }
+  }
+
+  .smartbet-dashboard__account-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+    > div { width: auto; min-width: 0; padding: 0; }
+    span { font-size: 0.75rem; overflow-wrap: anywhere; }
+    span:first-child { color: var(--muted-foreground) !important; font-size: 0.6rem; }
+  }
+
+  .smartbet-dashboard__workspace { display: grid; gap: 1rem; min-width: 0; }
+  .smartbet-dashboard__navigation,
+  .smartbet-dashboard__panels,
+  .tabcontents,
+  [role="tabpanel"] { min-width: 0; }
+  .pay_method__scrol { overflow: visible; }
+  .smartbet-dashboard__tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+  }
+  .smartbet-dashboard__tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.25rem !important;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--muted-foreground);
+    .tablink { color: inherit; font-size: 0.6rem; font-weight: 600; gap: 0.375rem !important; }
+    svg { display: block !important; width: 0.9rem; height: 0.9rem; color: inherit; flex-shrink: 0; }
+    &:hover { background: var(--secondary); }
+    &.is-active { background: var(--accent); color: var(--accent-foreground); }
+  }
+
+  .smartbet-dashboard__methods {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .smartbet-dashboard__method {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 4rem;
+    padding: 0.5rem !important;
+    border-radius: var(--radius) !important;
+    background: var(--card);
+    &[aria-pressed="true"] { background: color-mix(in oklab, var(--accent) 8%, var(--card)); }
+    img { width: 2.75rem; height: 1.5rem; object-fit: contain; }
+    span { color: var(--foreground); font-size: 0.55rem; font-weight: 600; }
+  }
+
+  .pay_method__paymethod-items {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 0.5rem !important;
+    .amount-active {
+      width: 100%;
+      min-width: 0;
+      height: auto;
+      padding: 0.25rem !important;
+      > div { height: 100%; padding: 0.75rem 0.5rem !important; text-align: center; }
+      .fs-ten { display: block; font-size: 0.75rem; white-space: nowrap; }
+      .fs-seven { font-size: 0.6rem; color: var(--muted-foreground); }
+    }
+  }
+  .pay_method__paymethod-alitem { margin-bottom: 1rem !important; }
+  .pay_method__formarea {
+    max-width: none;
+    form > .d-flex { gap: 0.75rem !important; margin-bottom: 1rem !important; border: 0; background: transparent !important; }
+    form > .d-flex > div { min-width: 0; }
+    .d-flex .d-flex { margin-bottom: 0 !important; }
+    input { width: 100%; min-width: 0; font-size: 0.7rem; }
+    label { font-size: 0.65rem; }
+    form > button[type="submit"] { background: var(--accent); color: var(--accent-foreground); }
+  }
+  .text-end { margin-bottom: 1rem !important; span { color: var(--muted-foreground); font-size: 0.6rem; } }
+  .text-success { color: var(--accent) !important; font-size: 0.85rem; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@container (max-width: 420px) {
+  .sportsbook-main .smartbet-dashboard {
+    .smartbet-dashboard__tab .tablink { flex-direction: column; font-size: 0.55rem; }
+    .smartbet-dashboard__methods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pay_method__formarea form > .d-flex { flex-wrap: wrap !important; }
+  }
+}
+
+@container (min-width: 680px) {
+  .sportsbook-main .smartbet-dashboard .smartbet-dashboard__account-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

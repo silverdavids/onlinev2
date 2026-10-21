@@ -90,9 +90,9 @@ export default function Login() {
                                                     padding: '12px',
                                                     borderRadius: '6px',
                                                     fontWeight: '600',
-                                                    backgroundColor: feedback.type === 'success' ? '#d4edda' : '#f8d7da',
-                                                    color: feedback.type === 'success' ? '#155724' : '#721c24',
-                                                    border: `1px solid ${feedback.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`
+                                                    backgroundColor: feedback.type === 'success' ? 'color-mix(in oklab, var(--accent) 12%, var(--card))' : 'color-mix(in oklab, var(--destructive) 12%, var(--card))',
+                                                    color: feedback.type === 'success' ? 'var(--foreground)' : 'var(--foreground)',
+                                                    border: `1px solid ${feedback.type === 'success' ? 'var(--accent)' : 'var(--destructive)'}`
                                                 }}
                                             >
                                                 {feedback.message}
@@ -133,6 +133,7 @@ export default function Login() {
                                                     {loading ? 'Verifying...' : 'Login Now'}
                                                 </button>
                                             </form>
+                                            <Link className="g1-color d-inline-block mb-4" href="/forgot-password">Forgot password?</Link>
                                         </div>
                                         <div className="login_section__socialmedia text-center mb-6">
                                             <span className="mb-6">Or continue with</span>

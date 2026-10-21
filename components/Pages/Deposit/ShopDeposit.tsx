@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { IconBuildingStore, IconCheck, IconCreditCard, IconHistory } from "@tabler/icons-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { depositApi, type AccountStatementViewModel } from "@/src/api/depositApi";
 import { normalizeApiError } from "@/src/api/apiError";
 import { useAccount } from "@/src/account/useAccount";
@@ -256,8 +257,9 @@ export default function ShopDeposit() {
                     <h5 className="n10-color">Mobile Money</h5>
                   </div>
                   <p className="mb-0 text-white-50">
-                    Mobile Money deposits remain separate from shop deposit code redemption.
+                    Top up your account using MTN Mobile Money or Airtel Money.
                   </p>
+                  <Link href="/deposit/mobile-money" className="cmn-btn px-5 py-2 mt-4">Continue with Mobile Money</Link>
                 </div>
               )}
 

@@ -5,8 +5,8 @@ html {
 
 body {
 	font-family: var(--body-font);
-	color: rgb(var(--n8));
-	background-color: rgb(var(--p1));
+	color: var(--foreground);
+	background-color: var(--background);
 	font-size: 16px;
 	line-height: 130%;
 	padding: 0;
@@ -44,21 +44,21 @@ label,
 li {
 	margin: 0;
 	font-family: var(--body-font);
-	color: rgba(var(--n8), 1);
+	color: var(--foreground);
 	font-weight: 400;
 }
 
 a {
 	text-decoration: none;
 	outline: none;
-	color: rgba(var(--n8), 1);
+	color: var(--foreground);
 	transition: var(--transition);
 
 	&:focus,
 	&:hover {
 		text-decoration: none;
 		outline: none;
-		color: rgba(var(--n8), 1);
+		color: var(--foreground);
 	}
 }
 
@@ -83,7 +83,7 @@ h6>a,
 .display-six,
 .heading {
 	font-family: var(--body-font);
-	color: rgba(var(--n8), 1);
+	color: var(--foreground);
 	font-weight: 700;
 	padding: 0;
 	margin: 0;
@@ -156,7 +156,7 @@ button {
 input,
 textarea {
 	padding: 12px 20px;
-	color: rgba(var(--n8), 1);
+	color: var(--foreground);
 	width: 100%;
 	font-family: var(--body-font);
 	outline-color: transparent;
@@ -291,144 +291,144 @@ select {
 	i,
 	select,
 	button {
-		color: rgba(var(--n8), 1);
+		color: var(--foreground);
 	}
 }
 
 .p1-color {
-	color: rgba(var(--p1), 1);
+	color: var(--background);
 }
 
 .p2-color {
-	color: rgba(var(--p2), 1);
+	color: var(--card);
 }
 
 .p3-color {
-	color: rgba(var(--p3), 1);
+	color: var(--secondary);
 }
 
 .p1-bg {
-	background: rgba(var(--p1), 1);
+	background: var(--background);
 }
 
 .p2-bg {
-	background: rgba(var(--p2), 1);
+	background: var(--card);
 }
 
 .p3-bg {
-	background: rgba(var(--p3), 1);
+	background: var(--secondary);
 }
 
 .n1-color {
-	color: rgba(var(--n1), 1);
+	color: var(--background);
 }
 
 .n2-color {
-	color: rgba(var(--n2), 1);
+	color: var(--border);
 }
 
 .n3-color {
-	color: rgba(var(--n3), 1);
+	color: var(--muted-foreground);
 }
 
 .n4-color {
-	color: rgba(var(--n4), 1);
+	color: var(--muted-foreground);
 }
 
 .n5-color {
-	color: rgba(var(--n5), 1);
+	color: var(--muted-foreground);
 }
 
 .n6-color {
-	color: rgba(var(--n6), 1);
+	color: var(--secondary);
 }
 
 .n7-color {
-	color: rgba(var(--n7), 1);
+	color: var(--foreground);
 }
 
 .n8-color {
-	color: rgba(var(--n8), 1);
+	color: var(--foreground);
 }
 
 .n9-color {
-	color: rgba(var(--n9), 1);
+	color: var(--foreground);
 }
 
 .n10-color {
-	color: rgba(var(--n10), 1);
+	color: var(--secondary);
 }
 
 .n11-color {
-	color: rgba(var(--n11), 1);
+	color: var(--odds);
 }
 
 .n1-bg {
-	background: rgba(var(--n1), 1);
+	background: var(--background);
 }
 
 .n2-bg {
-	background: rgba(var(--n2), 1);
+	background: var(--border);
 }
 
 .n3-bg {
-	background: rgba(var(--n3), 1);
+	background: var(--muted-foreground);
 }
 
 .n4-bg {
-	background: rgba(var(--n4), 1);
+	background: var(--muted-foreground);
 }
 
 .n5-bg {
-	background: rgba(var(--n5), 1);
+	background: var(--muted-foreground);
 }
 
 .n6-bg {
-	background: rgba(var(--n6), 1);
+	background: var(--secondary);
 }
 
 .n7-bg {
-	background: rgba(var(--n7), 1);
+	background: var(--foreground);
 }
 
 .n8-bg {
-	background: rgba(var(--n8), 1);
+	background: var(--foreground);
 }
 
 .n9-bg {
-	background: rgba(var(--n9), 1);
+	background: var(--foreground);
 }
 
 .n10-bg {
-	background: rgba(var(--n10), 1);
+	background: var(--secondary);
 }
 
 .n11-bg {
-	background: rgba(var(--n11), 1);
+	background: var(--odds);
 }
 
 .g1-color {
-	color: rgba(var(--g1), 1);
+	color: var(--accent);
 }
 
 .g1-bg {
-	background: rgba(var(--g1), 1);
+	background: var(--accent);
 }
 
 .r1-color {
-	color: rgba(var(--r1), 1);
+	color: var(--live);
 }
 
 .r1-bg {
-	background: rgba(var(--r1), 1);
+	background: var(--live);
 }
 
 .border-one {
-	border: 1px solid #35C31E;
+	border: 1px solid var(--accent);
 }
 
 .border-two {
-	border: 1px solid rgba(53, 195, 30, 0.50);
+	border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
 }
 
 .border-three {
@@ -436,7 +436,7 @@ select {
 }
 
 .border-four {
-	border: 1px solid #2C3655;
+	border: 1px solid var(--border);
 }
 
 .rounded-8 {
@@ -493,7 +493,7 @@ select {
 
 	&:hover {
 		background: rgba(var(--s2), 1);
-		color: rgba(var(--p2), 1);
+		color: var(--card);
 	}
 }
 
@@ -510,14 +510,14 @@ select {
 	// border-radius: 12px;
 	// position: relative;
 	// background-color: rgb(var(--db));
-	// color: rgba(var(--p2), 1) !important;
+	// color: var(--card) !important;
 	// text-decoration: none;
 	// transition: 0.3s ease all;
 	// z-index: 1;
 	// overflow: hidden;
 	// i{
 	// 	&:hover{
-	// 		color: rgba(var(--p2), 1);
+	// 		color: var(--card);
 	// 	}
 	// }
 	// &::before {
@@ -531,7 +531,7 @@ select {
 	// 	content: '';
 	// 	background-color: rgba(var(--s2), 1);
 	// 	z-index: -1;
-	// 	color: rgba(var(--p2), 1);
+	// 	color: var(--card);
 	// }
 
 	// &:hover::before,
@@ -540,7 +540,7 @@ select {
 	// 	left: 0;
 	// 	right: 0;
 	// 	opacity: 1;
-	// 	color: rgba(var(--p2), 1);
+	// 	color: var(--card);
 	// }
 
 	// &:active {
@@ -548,8 +548,8 @@ select {
 	// }
 
 	padding: 10px 20px;
-	background-color: #35C31E;
-	border: 3px solid #35C31E !important;
+	background-color: var(--accent);
+	border: 3px solid var(--accent) !important;
 	// outline-offset: -3px;
 	border-radius: 5px;
 	border: none;
@@ -560,28 +560,28 @@ select {
 
 	&:hover {
 		background-color: transparent;
-		color: rgba(var(--n8), 1);
+		color: var(--foreground);
 		transition: 0.5s linear;
-		border: 3px solid #35C31E ;
+		border: 3px solid var(--accent) ;
 	}
 
 	&.second-alt {
-		background-color: rgb(var(--p1));
-		border: 3px solid #35C31E;
+		background-color: var(--background);
+		border: 3px solid var(--accent);
 		&:hover {
-			color: rgba(var(--n8), 1);
-			background: #35C31E;
-			border: 3px solid #35C31E ;
+			color: var(--foreground);
+			background: var(--accent);
+			border: 3px solid var(--accent) ;
 		}
 	}
 
 	&.third-alt {
-		background-color: rgb(var(--p1));
-		outline: 2px #2C3655 solid;
+		background-color: var(--background);
+		outline: 2px var(--border) solid;
 
 		&:hover {
-			color: rgba(var(--n8), 1);
-			outline: 2px #35C31E solid;
+			color: var(--foreground);
+			outline: 2px var(--accent) solid;
 		}
 	}
 
@@ -593,17 +593,17 @@ select {
 		&::before,
 		&::after {
 
-			color: rgb(var(--p2));
+			color: var(--card);
 			background-color: rgb(var(--db));
 		}
 
 		&:hover,
 		&.active {
 
-			color: rgb(var(--p2));
+			color: var(--card);
 
 			i {
-				color: rgb(var(--p2));
+				color: var(--card);
 			}
 		}
 	}
@@ -614,18 +614,18 @@ select {
 		border: 1px solid rgba(var(--bg1), 1);
 
 		i {
-			color: rgb(var(--p1));
+			color: var(--background);
 		}
 
 		&::before,
 		&::after {
-			background-color: rgb(var(--p1));
+			background-color: var(--background);
 		}
 
 		&:hover,
 		&:focus,
 		&.active {
-			color: rgb(var(--p2)) !important;
+			color: var(--card) !important;
 
 			i {
 				color: rgb(var(--p2-fixed));
@@ -640,17 +640,17 @@ select {
 		&::before,
 		&::after {
 
-			color: rgb(var(--p2));
+			color: var(--card);
 			background-color: rgb(var(--db));
 		}
 
 		&:hover,
 		&.active {
 
-			color: rgb(var(--p2));
+			color: var(--card);
 
 			i {
-				color: rgb(var(--p2));
+				color: var(--card);
 			}
 		}
 	}
@@ -667,7 +667,7 @@ select {
 		}
 
 		&:hover {
-			color: rgba(var(--n8), 1);
+			color: var(--foreground);
 		}
 	}
 }
@@ -678,8 +678,8 @@ select {
 // 	font-weight: bold;
 // 	border-radius: 12px;
 // 	position: relative;
-// 	background-color: rgba(var(--p3), 1);
-// 	color: rgba(var(--p2), 1);
+// 	background-color: var(--secondary);
+// 	color: var(--card);
 // 	text-decoration: none;
 // 	transition: 0.3s ease all;
 // 	z-index: 1;
@@ -713,22 +713,22 @@ select {
 
 // 		&::before,
 // 		&::after {
-// 			background-color: rgb(var(--p1));
+// 			background-color: var(--background);
 // 		}
 // 	}
 
 // 	&.third-alt {
 // 		background-color: transparent;
-// 		color: rgb(var(--p1));
-// 		border: 1px solid rgb(var(--p1));
+// 		color: var(--background);
+// 		border: 1px solid var(--background);
 
 // 		i {
-// 			color: rgb(var(--p1));
+// 			color: var(--background);
 // 		}
 
 // 		&::before,
 // 		&::after {
-// 			background-color: rgb(var(--p1));
+// 			background-color: var(--background);
 // 		}
 
 // 		&:hover,
@@ -744,12 +744,12 @@ select {
 
 // 	&.fourth-alt {
 // 		background-color: transparent;
-// 		color: rgb(var(--n2));
-// 		border: 1px solid rgb(var(--n4));
+// 		color: var(--border);
+// 		border: 1px solid var(--muted-foreground);
 
 // 		&::before,
 // 		&::after {
-// 			background-color: rgb(var(--p1));
+// 			background-color: var(--background);
 // 		}
 
 // 		&:hover,
@@ -764,16 +764,16 @@ select {
 
 // 	&.fifth-alt {
 // 		background-color: transparent;
-// 		color: rgb(var(--n2));
-// 		border: 1px solid rgba(var(--n4), 0.3);
+// 		color: var(--border);
+// 		border: 1px solid color-mix(in oklab, var(--muted-foreground) 30%, transparent);
 
 // 		i {
-// 			color: rgb(var(--p1));
+// 			color: var(--background);
 // 		}
 
 // 		&::before,
 // 		&::after {
-// 			background-color: rgb(var(--p1));
+// 			background-color: var(--background);
 // 		}
 
 // 		&:hover,
@@ -791,7 +791,7 @@ select {
 // border-gradient
 
 // .border-gradient{
-// 	background: linear-gradient(rgb(var(--p1)), rgb(var(--p1))) padding-box,var(--gradient-p1);
+// 	background: linear-gradient(var(--background), var(--background)) padding-box,var(--gradient-p1);
 // 	border-radius: 15px;
 // 	border: 1px solid rgb(var(--db));
 // 	transition: var(--transition);
@@ -814,7 +814,7 @@ select {
 // File Upload Custom
 .file-upload {
 	border-radius: 48px;
-	border: 1px solid rgba(var(--p1), 1);
+	border: 1px solid var(--background);
 
 	input {
 		display: none;
@@ -830,7 +830,7 @@ select {
 	}
 
 	.add-file {
-		color: rgba(var(--p1), 1);
+		color: var(--background);
 	}
 }
 
@@ -839,7 +839,7 @@ select {
 
 	&:hover {
 		background-color: #2A235B;
-		color: rgba(var(--p2), 1);
+		color: var(--card);
 	}
 }
 
@@ -858,7 +858,7 @@ select {
 		position: absolute;
 		width: 85%;
 		height: 85%;
-		background-color: rgb(var(--p1));
+		background-color: var(--background);
 		border-radius: 50%;
 		opacity: 0.6;
 		z-index: -1;
@@ -870,7 +870,7 @@ select {
 		position: absolute;
 		width: 85%;
 		height: 85%;
-		background-color: rgb(var(--p1));
+		background-color: var(--background);
 		border-radius: 50%;
 		opacity: 0.6;
 		z-index: -1;
@@ -899,7 +899,7 @@ select {
 	height: 150px;
 	border-radius: 50%;
 	background-color: rgba(var(--s3), 1);
-	border: 1px solid rgba(var(--p2), 1);
+	border: 1px solid var(--card);
 	position: relative;
 
 	.text {
@@ -914,7 +914,7 @@ select {
 
 		span {
 			position: absolute;
-			color: rgba(var(--p2), 1);
+			color: var(--card);
 			font-size: inherit;
 			font-weight: 600;
 			transform-origin: 0 70px;
@@ -930,7 +930,7 @@ select {
 	&.second {
 		width: 120px;
 		height: 120px;
-		background-color: rgba(var(--n2), 1);
+		background-color: var(--border);
 		border-color: transparent;
 
 		.text {
@@ -963,7 +963,7 @@ select {
 
 // vertical border 
 .v-border {
-	background: rgba(var(--p1), 0.2);
+	background: color-mix(in oklab, var(--background) 20%, transparent);
 	width: 1px;
 	height: 25px;
 }
@@ -987,7 +987,7 @@ select {
 	&.lgx::before {
 		width: 1px;
 		height: 51px;
-		background-color: #2C3655;
+		background-color: var(--border);
 	}
 
 	&.lg2::before {
@@ -1011,21 +1011,21 @@ select {
 	}
 
 	&.dashed::before {
-		border-right: 1px dashed rgb(var(--n5));
+		border-right: 1px dashed var(--muted-foreground);
 		background: transparent;
 	}
 }
 
 // vertical border 
 .cus-border {
-	border-color: rgba(var(--p1), 1) !important;
+	border-color: var(--background) !important;
 
 	&.second {
-		border-color: rgba(var(--p1), 0.10) !important;
+		border-color: color-mix(in oklab, var(--background) 10%, transparent) !important;
 	}
 
 	&.third {
-		border-color: rgb(var(--n5)) !important;
+		border-color: var(--muted-foreground) !important;
 	}
 
 }
@@ -1052,9 +1052,9 @@ select {
 .social-area {
 	a {
 		@include box(40);
-		border: 1px solid rgba(var(--p1), 0.1);
+		border: 1px solid color-mix(in oklab, var(--background) 10%, transparent);
 		border-radius: 50%;
-		background: rgb(var(--p1));
+		background: var(--background);
 		display: block;
 		transition: var(--transition);
 
@@ -1066,18 +1066,18 @@ select {
 			background-color: transparent;
 
 			i {
-				color: rgba(var(--p1), 1);
+				color: var(--background);
 			}
 		}
 	}
 
 	&.alt {
 		a {
-			border-color: rgba(var(--p1), 1);
+			border-color: var(--background);
 			background: transparent;
 
 			&:hover {
-				background-color: rgba(var(--p1), 1);
+				background-color: var(--background);
 			}
 		}
 	}
@@ -1095,7 +1095,7 @@ select {
 
 			i,
 			span {
-				color: rgba(var(--p2), 1);
+				color: var(--card);
 			}
 		}
 	}
@@ -1120,13 +1120,13 @@ select {
 	.cursor-outline {
 		height: 30px;
 		width: 30px;
-		border: 1px solid rgba(var(--p1), 1);
+		border: 1px solid var(--background);
 	}
 
 	.cursor-dot {
 		height: 6px;
 		width: 6px;
-		background: rgba(var(--p1), 1);
+		background: var(--background);
 	}
 
 	&.hide-cursor {
@@ -1158,7 +1158,7 @@ iframe {
 
 // Custom Dropdown 
 *::-webkit-scrollbar-track {
-	background: rgba(var(--n4), 1);
+	background: var(--muted-foreground);
 }
 
 *::-webkit-scrollbar {
@@ -1167,7 +1167,7 @@ iframe {
 
 *::-webkit-scrollbar-button,
 *::-webkit-scrollbar-thumb {
-	background: rgba(var(--n2), 1);
+	background: var(--border);
 }
 
 .cus-scrollbar {
@@ -1236,9 +1236,9 @@ iframe {
 	width: 40px;
 	height: 40px;
 	right: 60px;
-	background-color: rgba(var(--g1), 1);
+	background-color: var(--accent);
 	padding: 0 12px;
-	color: rgba(var(--n7), 1);
+	color: var(--foreground);
 	line-height: 120%;
 	font-size: 12px;
 	border-radius: 5px;
@@ -1307,7 +1307,7 @@ iframe {
 	  right: 5px;
 	  bottom: 5px;
 	  border: 3px solid transparent;
-	  border-top-color: #35C31E;
+	  border-top-color: var(--accent);
 	  @include animation(2s);
 	}
 	&:after {
@@ -1482,14 +1482,14 @@ iframe {
 // 			border-radius: unset;
 // 			background: rgba(12, 169, 64, 0.70);
 // 			font-weight: 700;
-// 			color: rgba(var(--n7));
+// 			color: var(--foreground);
 
 // 			.active {
-// 				background: rgba(var(--n7));
+// 				background: var(--foreground);
 // 			}
 
 // 			button {
-// 				color: rgb(var(--n7));
+// 				color: var(--foreground);
 // 				transition: var(--transition);
 // 			}
 // 		}
@@ -1530,7 +1530,7 @@ iframe {
 // Pagination
 .pagination {
 	li a {
-		color: rgba(var(--n2), 1);
+		color: var(--border);
 	}
 
 	.page-item {
@@ -1549,7 +1549,7 @@ iframe {
 			&:hover,
 			&.active,
 			&:focus {
-				background-color: rgba(var(--p1), 1);
+				background-color: var(--background);
 				border-color: transparent;
 				box-shadow: none;
 			}
@@ -1564,7 +1564,7 @@ iframe {
 
 		a,
 		span {
-			color: rgba(var(--n8), 1);
+			color: var(--foreground);
 			font-size: 18px;
 			font-weight: 500;
 
@@ -1584,11 +1584,11 @@ iframe {
 			position: absolute;
 			left: 0;
 			font-size: 24px;
-			color: rgba(var(--n8), 1);
+			color: var(--foreground);
 		}
 
 		.active span {
-			color: rgba(var(--p1), 1);
+			color: var(--background);
 		}
 	}
 }
@@ -1616,7 +1616,7 @@ iframe {
 		width: 10px;
 		right: 15px;
 		top: initial;
-		border-color: rgba(var(--n2), 0.6);
+		border-color: color-mix(in oklab, var(--border) 60%, transparent);
 		;
 	}
 
@@ -1702,7 +1702,7 @@ input[type=radio] {
 // Single switch
 .switch-wrapper {
 	.active {
-		color: rgba(var(--p1), 1);
+		color: var(--background);
 	}
 
 	.switch {
@@ -1713,7 +1713,7 @@ input[type=radio] {
 			cursor: pointer;
 			border-radius: 34px;
 			transition: var(--transition);
-			background: rgba(var(--p1), 1);
+			background: var(--background);
 
 			&::before {
 				position: absolute;
@@ -1750,7 +1750,7 @@ input[type=radio] {
 		left: 0;
 		height: 16px;
 		width: 16px;
-		border: 1px solid rgba(var(--p1), 1);
+		border: 1px solid var(--background);
 		border-radius: 50%;
 
 		&::after {
@@ -1765,11 +1765,11 @@ input[type=radio] {
 
 	input:checked~.checkmark {
 		background-color: transparent;
-		border: 1px solid rgba(var(--p2), 1);
+		border: 1px solid var(--card);
 
 		&::after {
 			display: block;
-			background: rgba(var(--p2), 1);
+			background: var(--card);
 		}
 	}
 }
@@ -1831,29 +1831,29 @@ input[type=radio] {
 		padding-right: 40px !important;
 
 		&::placeholder {
-			color: rgba(var(--n8), 1);
+			color: var(--foreground);
 		}
 
 		&:focus,
 		&:hover {
 			border: none;
 			outline: none;
-			color: rgba(var(--n8), 1);
+			color: var(--foreground);
 		}
 
 		.current {
-			color: rgba(var(--n8), 1);
+			color: var(--foreground);
 			font-size: 16px;
 			border: none;
 			outline: none;
 		}
 
 		.list {
-			border: 1px solid rgba(var(--n6), 0.2);
+			border: 1px solid color-mix(in oklab, var(--secondary) 20%, transparent);
 			bottom: initial;
 			padding: 8px 16px;
 			background: rgb(var(--bg1));
-			color: rgba(var(--n8), 1);
+			color: var(--foreground);
 		}
 
 		&::after {

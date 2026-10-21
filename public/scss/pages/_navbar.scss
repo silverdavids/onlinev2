@@ -35,7 +35,7 @@
                     top: 0;
                     left: -34%;
                     font-size: 16px;
-                    background: rgb(var(--p2));
+                    background: var(--card);
                     border-radius: 4px;
 
                     @include maxQuery(1399) {
@@ -130,7 +130,7 @@
                 }
 
                 .more_lang .lang:hover {
-                    background: rgb(var(--p3));
+                    background: var(--secondary);
                     color: #fff;
                 }
 
@@ -151,7 +151,7 @@
                 }
 
                 .translate_wrapper.active .lang {
-                    border-bottom: 1px solid rgba(53, 195, 30, 0.50);
+                    border-bottom: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
                 }
 
                 /*CONTENT*/
@@ -232,7 +232,7 @@
             padding: 5px;
             border-radius: 10px;
             border: 1px solid rgba(var(--s2), 0.2);
-            background-color: rgb(var(--p2));
+            background-color: var(--card);
         }
     }
 
@@ -361,7 +361,7 @@
     .active {
         .cmn-head4 {
             i {
-                color: rgb(var(--p2));
+                color: var(--card);
             }
         }
     }
@@ -373,7 +373,7 @@
     }
 
     ul li.active {
-        background-color: rgb(var(--n11));
+        background-color: var(--odds);
         color: #fff;
         i{
             opacity: 1;
@@ -384,7 +384,7 @@
         }
 
         &:hover {
-            background-color: rgb(var(--n11));
+            background-color: var(--odds);
         }
     }
 
@@ -421,7 +421,7 @@
         }
 
         &:hover {
-            background-color: rgb(var(--n11));
+            background-color: var(--odds);
 
             button {
                 i {
@@ -446,7 +446,7 @@
     &__footer {
         &-fileup {
             border-radius: 10px;
-            border: 1px solid  #2C3655;
+            border: 1px solid  var(--border);
         }
     }
 }
@@ -455,17 +455,17 @@
     position: fixed;
     top: 0;
     z-index: 999;
-    background-color: rgba(var(--p2), 1);
+    background-color: var(--card);
 
     @include maxQuery(991) {
-        background-color: rgba(var(--p2), 1);
+        background-color: var(--card);
         box-shadow: 0px 3px 10px 0px rgba(0, 0, 0, 0.3);
     }
 
     &.header-fixed {
         border-color: transparent;
         box-shadow: 0px 3px 10px 0px rgba(0, 0, 0, 0.3);
-        background-color: rgba(var(--p2), 1);
+        background-color: var(--card);
     }
 
     .navbar-toggler {
@@ -495,7 +495,7 @@
             position: absolute;
             height: 3px;
             width: 100%;
-            background: rgba(var(--p2), 1);
+            background: var(--card);
             border-radius: 9px;
             opacity: 1;
             left: 0;
@@ -562,11 +562,11 @@
 
             li {
                 .active{
-                    border-bottom: 1px solid rgba(var(--g1), 1);
+                    border-bottom: 1px solid var(--accent);
                 }
                 .navunik {
                     &:hover {
-                        border-bottom: 1px solid rgba(var(--n8), 1);
+                        border-bottom: 1px solid var(--foreground);
                     }
                 }
             }
@@ -584,7 +584,7 @@
 
                 &.active,
                 &:hover {
-                    color: rgba(var(--n8), 1);
+                    color: var(--foreground);
 
                     &::before {
                         transform: rotate(-50deg);
@@ -596,7 +596,7 @@
 
             .dropdown-menu,
             .sub-menu {
-                background-color: rgba(var(--p2), 1);
+                background-color: var(--card);
                 box-shadow: var(--shadow-lg);
 
                 Link,
@@ -748,7 +748,7 @@
             }
 
             .navbar-toggler span {
-                background-color: rgba(var(--n8), 1);
+                background-color: var(--foreground);
             }
 
             .navbar-collapse .navbar-nav {
@@ -822,7 +822,7 @@
 
                 .abs-area {
                     // background: rgba(var(--s6), 1);
-                    border: 2px solid rgba(var(--p2), 2);
+                    border: 2px solid color-mix(in oklab, var(--card) 200%, transparent);
                     border-radius: 50%;
                     width: 20px;
                     height: 20px;
@@ -877,7 +877,7 @@
                     max-width: 500px;
                     min-height: 100vh;
                     overflow-y: auto;
-                    background-color: rgba(var(--n8), 1);
+                    background-color: var(--foreground);
                     box-shadow: var(--shadow-lg);
                     backdrop-filter: blur(22.5px);
                     z-index: 999;
@@ -966,11 +966,11 @@
 .middle-iconfixed {
     top: 20% !important;
     z-index: 5 !important;
-    background-color: rgb(var(--g1)) !important;
+    background-color: var(--accent) !important;
     border-radius: 0 7px 7px 0;
 }
 .secend-actives{
     .active{
-        background-color: rgba(var(--p2), 1) !important;
+        background-color: var(--card) !important;
     }
 }

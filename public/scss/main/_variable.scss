@@ -1,10 +1,8 @@
-// default font family
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.36.0/tabler-icons.min.css');
 
 // default root
 :root {
-	--body-font: 'Inter', sans-serif;
+	--body-font: var(--font-sans), system-ui, sans-serif;
 	--transition: all 0.5s ease-in-out;
 	--transition2: all 0.3s ease-in-out;
 	--animate-duration: 1s;

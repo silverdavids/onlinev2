@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { LiveMarket, LiveMatch, LiveOddOption } from "@/src/domain/live";
 import { useLiveFeed } from "@/src/live/useLiveFeed";
 import { usePrematchBetslip } from "@/src/betslip/usePrematchBetslip";
@@ -46,7 +47,7 @@ const sortedMarkets = (match: LiveMatch): LiveMarket[] => {
   return markets.slice(0, MAX_MARKETS_PER_MATCH);
 };
 
-const LiveOddButton = ({
+export const LiveOddButton = ({
   match,
   market,
   option,
@@ -69,10 +70,9 @@ const LiveOddButton = ({
       data-live-line={market.line ?? undefined}
       data-live-bookmaker={match.bookmakerId || undefined}
       disabled={blocked}
+      aria-pressed={isSelected(key)}
       onClick={() => toggleLiveSelection(match, market, option)}
       style={{
-        outline: isSelected(key) ? "2px solid #35C31E" : undefined,
-        backgroundColor: isSelected(key) ? "#12351f" : undefined,
         opacity: blocked ? 0.55 : undefined,
       }}
       title={blocked ? "Suspended" : `${marketLabel(market)} ${option.name}`}
@@ -180,6 +180,7 @@ const LiveMatchCard = ({ match }: { match: LiveMatch }) => {
           )}
         </div>
       </div>
+      <Link className="fs-eight d-inline-block mt-3" href={`/live-betting/${match.matchId}`}>View all markets</Link>
     </div>
   );
 };

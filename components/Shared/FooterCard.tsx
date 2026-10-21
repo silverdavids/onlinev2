@@ -1,8 +1,12 @@
 "use client";
 
-import { IconArrowBadgeUpFilled } from "@tabler/icons-react";
-import { useEffect, useMemo, useState } from "react";
+import { IconArrowBadgeUpFilled, IconTicket, IconTrash, IconX } from "@tabler/icons-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import BetslipNotification, { getBetslipNotice, type BetslipNotice } from "./BetslipNotification";
+import type { BetslipReceiptState, BetslipBookingConfirmation } from "@/src/betslip/PrematchBetslipProvider";
 import { usePrematchBetslip } from "@/src/betslip/usePrematchBetslip";
+import { useAuth } from "@/src/auth/useAuth";
+import { recordTicketNotification } from "@/src/notifications/ticketNotifications";
 
 const formatNumber = (value: number | null | undefined): string => {
   if (value === null || value === undefined || !Number.isFinite(value)) {
@@ -19,10 +23,21 @@ const formatOdd = (value: number): string =>
     maximumFractionDigits: 2,
   }).format(value);
 
+type BetslipToast = {
+  id: number;
+  message: string;
+  notice: BetslipNotice;
+  receipt: BetslipReceiptState | null;
+  booking: BetslipBookingConfirmation | null;
+};
+
 export default function FooterCard() {
   const [isCardExpanded, setIsCardExpanded] = useState(false);
-  const [isBetslipBetEnabled, setIsBetslipBetEnabled] = useState(false);
   const [bookingCodeInput, setBookingCodeInput] = useState("");
+  const contentRef = useRef<HTMLDivElement>(null);
+  const recordedResponseRef = useRef<number | null>(null);
+  const { user } = useAuth();
+  const [toast, setToast] = useState<BetslipToast | null>(null);
   const {
     selections,
     selectionCount,
@@ -31,6 +46,7 @@ export default function FooterCard() {
     potentialWin,
     validation,
     serverMessage,
+    serverResponseId,
     isSubmitting,
     isBooking,
     isRetrievingBooking,
@@ -57,8 +73,6 @@ export default function FooterCard() {
     () => selections.filter((selection) => selection.status === "suspended").length,
     [selections]
   );
-  const isValidationBlocked =
-    selectionCount > 0 && (!validation.valid || changedOdds.length > 0);
   const canPlaceTicket =
     selectionCount > 0 &&
     validation.valid &&
@@ -73,12 +87,16 @@ export default function FooterCard() {
     !isBooking &&
     !isSubmitting &&
     !isRetrievingBooking;
+  const betslipNotice = serverMessage
+    ? getBetslipNotice(serverMessage)
+    : null;
 
   useEffect(() => {
     const stored = window.localStorage.getItem("prematch-betslip-open");
     if (stored === "true") {
       setIsCardExpanded(true);
     }
+
   }, []);
 
   useEffect(() => {
@@ -89,11 +107,45 @@ export default function FooterCard() {
   }, [isCardExpanded]);
 
   useEffect(() => {
+    if (isSubmitting || isBooking || isRetrievingBooking) {
+      setToast(null);
+      return;
+    }
+    if (!serverMessage) {
+      setToast((current) => current?.notice.role === "alert" ? null : current);
+      return;
+    }
+    const notice = getBetslipNotice(serverMessage);
+    if (user?.id && recordedResponseRef.current !== serverResponseId) {
+      recordedResponseRef.current = serverResponseId;
+      recordTicketNotification(user.id, {
+        title: notice.title,
+        message: serverMessage,
+        href: receipt?.receiptId ? `/tickets/${receipt.receiptId}` : bookingConfirmation ? "/booking-code" : "/betslip",
+      });
+    }
+    setToast({
+      id: serverResponseId,
+      message: serverMessage,
+      notice,
+      receipt: notice.role === "status" ? receipt : null,
+      booking: notice.role === "status" ? bookingConfirmation : null,
+    });
+  }, [serverMessage, serverResponseId, isSubmitting, isBooking, isRetrievingBooking, receipt, bookingConfirmation, user?.id]);
+
+  const dismissToast = useCallback(() => setToast(null), []);
+  const showResponseDetails = () => {
+    dismissToast();
+    setIsCardExpanded(true);
+    requestAnimationFrame(() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" }));
+  };
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         isCardExpanded &&
         event.target instanceof Element &&
-        !event.target.closest(".fixed_footer")
+        !event.target.closest(".fixed_footer, .betslip-response--floating")
       ) {
         setIsCardExpanded(false);
       }
@@ -106,11 +158,49 @@ export default function FooterCard() {
   }, [isCardExpanded]);
 
   return (
-    <div
-      className={`fixed_footer p3-bg rounded-5 ${
-        isCardExpanded ? "expandedtexta is-open" : "expanded2"
-      }`}
-    >
+    <>
+      {toast && (
+        <BetslipNotification key={toast.id} notice={toast.notice} message={toast.message} onDismiss={dismissToast}>
+          {toast.receipt && (
+            <dl className="betslip-response__details">
+              <div><dt>Receipt number</dt><dd>{toast.receipt.receiptId ?? toast.receipt.ticketNumber ?? "Pending"}</dd></div>
+              <div><dt>Stake</dt><dd>USh {formatNumber(toast.receipt.stake)}</dd></div>
+              <div><dt>Possible return</dt><dd>USh {formatNumber(toast.receipt.potentialPayout)}</dd></div>
+            </dl>
+          )}
+          {toast.booking && (
+            <dl className="betslip-response__details">
+              <div><dt>Booking code</dt><dd>{toast.booking.bookingCode}</dd></div>
+              <div><dt>Expires in</dt><dd>{toast.booking.expiresInMinutes} minutes</dd></div>
+            </dl>
+          )}
+          {changedOdds.length > 0 && serverMessage === toast.message ? (
+            <>
+              <div className="betslip-response__changes">
+                {changedOdds.map((change, index) => (
+                  <div key={`${change.key ?? "change"}-${index}`}>
+                    <span>{change.market} {change.option}</span>
+                    <strong>{formatNumber(change.oldOdd)} to {formatNumber(change.newOdd)}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className="betslip-response__actions">
+                <button type="button" onClick={() => { acceptChangedOdds(); dismissToast(); }}>Accept changes</button>
+                <button type="button" onClick={() => { cancelChangedOdds(); dismissToast(); }}>Cancel</button>
+              </div>
+              <p className="betslip-response__hint">After accepting, submit the slip again to confirm.</p>
+            </>
+          ) : serverMessage === toast.message && (
+            <button className="betslip-response__view" type="button" onClick={showResponseDetails}>View slip details</button>
+          )}
+        </BetslipNotification>
+      )}
+
+      <div
+        className={`fixed_footer smartbet-slip ${
+          isCardExpanded ? "expandedtexta is-open" : "expanded2"
+        }`}
+      >
       <div
         className="fixed_footer__head py-3 px-4"
         onClick={() => setIsCardExpanded((expanded) => !expanded)}
@@ -125,7 +215,7 @@ export default function FooterCard() {
       >
         <div className="d-flex justify-content-between">
           <div className="fixed_footer__head-betslip d-flex align-items-center gap-2">
-            <span className="fw-bold">Betslip</span>
+            <span className="fw-bold">Bet slip</span>
             <span className="fixed_footer__head-n1">{selectionCount}</span>
             <button
               onClick={(event) => {
@@ -139,37 +229,25 @@ export default function FooterCard() {
               <IconArrowBadgeUpFilled className="ti ti-arrow-badge-down-filled n5-color fs-four fixediconstyle" />
             </button>
           </div>
-          <div
-            className="fixed_footer__head-quickbet d-flex align-items-center gap-2"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <span className="fw-bold">Betslip Bet</span>
-            <input
-              checked={isBetslipBetEnabled}
-              id="prematch-betslip-bet-toggle"
-              onChange={(event) => setIsBetslipBetEnabled(event.target.checked)}
-              type="checkbox"
-            />
-            <label
-              htmlFor="prematch-betslip-bet-toggle"
-              aria-label="Toggle betslip bet"
-            >
-              Betslip Bet
-            </label>
-          </div>
         </div>
       </div>
 
-      <div className="fixed_footer__content position-relative">
-          <div className="fixed_footer__content-live px-4 py-5 mb-5">
-            {selectionCount === 0 && (
+      <div ref={contentRef} className="fixed_footer__content position-relative">
+          <div className="fixed_footer__content-live">
+            {selectionCount > 0 && (
+              <div className="smartbet-slip__selection-header">
+                <strong>{selectionCount} {selectionCount === 1 ? "selection" : "selections"}</strong>
+                <button type="button" onClick={clearSelections}>
+                  <IconTrash size={16} aria-hidden="true" /> Clear all
+                </button>
+              </div>
+            )}
+            {selectionCount === 0 && !receipt && !bookingConfirmation && !serverMessage && (
               <div className="sportsbook-betslip-empty">
-                <h6 className="mb-2">Betslip</h6>
-                <span className="fs-eight cpoint d-block mb-2">
-                  0 selections
-                </span>
+                <IconTicket size={32} aria-hidden="true" />
+                <h6 className="mb-2">Your bet slip is empty</h6>
                 <p className="fs-seven cpoint mb-0">
-                  Select an odd to add it to your betslip
+                  Tap any odds to add a selection.
                 </p>
               </div>
             )}
@@ -201,8 +279,11 @@ export default function FooterCard() {
               </div>
             )}
 
-            {serverMessage && (
-              <div className="top_matches__cmncard p2-bg p-3 rounded-3 mb-4">
+            {serverMessage && betslipNotice && (
+              <div
+                className={`betslip-response ${betslipNotice.className} mb-4`}
+              >
+                <strong className="d-block mb-1">{betslipNotice.title}</strong>
                 <span className="fs-seven">{serverMessage}</span>
               </div>
             )}
@@ -272,34 +353,29 @@ export default function FooterCard() {
             )}
 
             {selections.map((selection) => (
-              <div className="mb-4" key={selection.key}>
-                <div className="d-flex align-items-start justify-content-between gap-3 mb-2">
-                  <div>
-                    <span className="fs-seven cpoint d-block">
-                      {selection.display.homeTeamName} vs{" "}
+              <div className="smartbet-slip__selection" key={selection.key}>
+                <div className="smartbet-slip__selection-main">
+                  <div className="smartbet-slip__selection-info">
+                    <span className="smartbet-slip__match" title={`${selection.display.homeTeamName} v ${selection.display.awayTeamName}`}>
+                      {selection.display.homeTeamName} v{" "}
                       {selection.display.awayTeamName}
                     </span>
-                    <span className="fs-nine d-block">
-                      {selection.display.league} - {selection.display.kickoff}
+                    <span className="smartbet-slip__market">
+                      {selection.display.marketName} · <strong>{selection.display.selectionName}</strong>
                     </span>
                   </div>
-                  <div className="text-end">
-                    <span className="fixed_footer__content-scr py-1 px-2 fs-seven d-inline-block mb-2">
+                    <span className="smartbet-slip__odd">
                       {formatOdd(selection.operational.odd)}
                     </span>
                     <button
-                      className="border-0 bg-transparent n4-color fs-nine d-block"
+                      className="smartbet-slip__remove"
+                      aria-label={`Remove ${selection.display.homeTeamName} v ${selection.display.awayTeamName}`}
                       type="button"
                       onClick={() => removeSelection(selection.key)}
                     >
-                      Remove
+                      <IconX size={18} aria-hidden="true" />
                     </button>
-                  </div>
                 </div>
-                <span className="fs-nine d-block">
-                  {selection.display.marketName} -{" "}
-                  {selection.display.selectionName}
-                </span>
                 {selection.previousOdd !== null && (
                   <span className="fs-nine d-block cpoint">
                     Was {formatOdd(selection.previousOdd)}
@@ -314,30 +390,40 @@ export default function FooterCard() {
             ))}
 
             {selectionCount > 0 && (
-              <>
-                <div className="mb-4">
-                  <label className="fs-eight d-block mb-2" htmlFor="prematch-stake">
-                    Stake
-                  </label>
+              <div className="smartbet-slip__controls">
+                <div className="smartbet-slip__quick-stakes" aria-label="Quick stake">
+                  {[1000, 2000, 5000, 10000].map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      aria-pressed={Number(stakeInput) === amount}
+                      onClick={() => setStakeInput(String(amount))}
+                    >
+                      {amount / 1000}k
+                    </button>
+                  ))}
+                </div>
+                <label className="smartbet-slip__stake" htmlFor="prematch-stake">
+                  <span>Stake (UGX)</span>
                   <input
                     id="prematch-stake"
-                    className="p2-bg rounded-3 py-2 px-3 border-0 n4-color w-100"
                     inputMode="decimal"
                     min="0"
                     placeholder="Enter stake"
-                    type="text"
+                    type="number"
+                    step="500"
                     value={stakeInput}
                     onChange={(event) => setStakeInput(event.target.value)}
                   />
-                </div>
+                </label>
 
-                <div className="d-flex align-items-center justify-content-between mb-2">
+                <div className="smartbet-slip__total">
                   <span className="fs-eight">Total odds</span>
                   <strong>{formatOdd(totalOdds)}</strong>
                 </div>
-                <div className="d-flex align-items-center justify-content-between mb-4">
+                <div className="smartbet-slip__total smartbet-slip__potential">
                   <span className="fs-eight">Potential win</span>
-                  <strong>{formatNumber(potentialWin)}</strong>
+                  <strong>USh {formatNumber(potentialWin)}</strong>
                 </div>
 
                 {!validation.valid && (
@@ -367,41 +453,29 @@ export default function FooterCard() {
                   </div>
                 )}
 
-                {isValidationBlocked && (
-                  <span className="fs-nine cpoint d-block mb-3">
-                    Resolve the validation messages above before this slip can be used later.
-                  </span>
-                )}
-
-                <div className="d-flex align-items-center gap-3 flex-wrap">
+                <div className="smartbet-slip__actions">
                   <button
-                    className="cmn-btn third-alt px-4 py-2"
-                    type="button"
-                    disabled={!canPlaceTicket}
-                    onClick={placeTicket}
-                  >
-                    {isSubmitting ? "Placing..." : "Place Bet"}
-                  </button>
-                  <button
-                    className="cmn-btn px-4 py-2"
+                    className="smartbet-slip__book"
                     type="button"
                     disabled={!canBookTicket}
                     onClick={bookTicket}
                   >
-                    {isBooking ? "Saving..." : "Save Booking"}
+                    {isBooking ? "Creating..." : "Create booking code"}
                   </button>
                   <button
-                    className="cmn-btn px-4 py-2"
+                    className="smartbet-slip__place"
                     type="button"
-                    onClick={clearSelections}
+                    disabled={!canPlaceTicket}
+                    onClick={placeTicket}
                   >
-                    Clear
+                    {isSubmitting ? "Placing..." : "Place bet"}
                   </button>
                 </div>
-              </>
+              </div>
             )}
 
-            <div className="top_matches__cmncard p2-bg p-3 rounded-3 mt-4">
+            <details className="smartbet-slip__load-booking">
+              <summary>Load booking code</summary>
               <label className="fs-eight d-block mb-2" htmlFor="prematch-booking-code">
                 Booking code
               </label>
@@ -431,10 +505,11 @@ export default function FooterCard() {
                   {isRetrievingBooking ? "Loading..." : "Load"}
                 </button>
               </div>
-            </div>
+            </details>
 
           </div>
         </div>
-    </div>
+      </div>
+    </>
   );
 }

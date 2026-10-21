@@ -11,6 +11,7 @@
 @import "bootstrap.scss";
 // Scss main
 @import "main/_variable";
+@import "main/_smartbet-tokens";
 @import "main/_mixins";
 @import "main/_typography";
 @import "main/_global";
@@ -21,3 +22,8 @@
 @import "pages/_section";
 @import "pages/_index.scss";
 @import "pages/_sportsbook-shell";
+@import "pages/_smartbet-theme";
+@import "pages/_betslip";
+@import "pages/_dashboard";
+@import "pages/_content-pages";
+@import "pages/_game-lobby";

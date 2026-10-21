@@ -16,28 +16,20 @@ import {
   IconWifi,
   IconX,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { menuGroups } from "@/src/navigation/siteNavigation";
 import { useAuth } from "@/src/auth/useAuth";
+import ThemeToggle from "./ThemeToggle";
 
 const products = [
   { name: "Home", href: "/", icon: IconHome, exact: true },
   { name: "Sports", href: "/soccer", icon: IconTrophy },
   { name: "Live", href: "/live-betting", icon: IconWifi },
-  { name: "Casino", href: "/ecricket", icon: IconSpade },
-  { name: "Aviator", href: "/promotions", icon: IconPlane },
-  { name: "Crash", href: "/promotions", icon: IconRocket },
-  { name: "Slots", href: null, icon: IconDice5, soon: true },
-  { name: "Virtuals", href: null, icon: IconDeviceGamepad2, soon: true },
-];
-
-const menuLinks = [
-  { label: "Sports", href: "/soccer" },
-  { label: "Live Betting", href: "/live-betting" },
-  { label: "Tickets", href: "/tickets" },
-  { label: "Deposit Guide", href: "/deposit-guide" },
-  { label: "Terms", href: "/terms" },
-  { label: "Privacy Policy", href: "/privacy-policy" },
-  { label: "Contact", href: "/contact" },
+  { name: "Casino", href: "/casino", icon: IconSpade },
+  { name: "Aviator", href: "/aviator", icon: IconPlane },
+  { name: "Crash", href: "/crash", icon: IconRocket },
+  { name: "Slots", href: "/slots", icon: IconDice5, soon: true },
+  { name: "Virtuals", href: "/virtuals", icon: IconDeviceGamepad2, soon: true },
 ];
 
 export default function SmartbetTopBar() {
@@ -45,6 +37,13 @@ export default function SmartbetTopBar() {
   const router = useRouter();
   const { isAuthenticated, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [menuOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -57,6 +56,8 @@ export default function SmartbetTopBar() {
         <div className="smartbet-topbar__inner">
           <button
             aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="smartbet-menu"
             className="smartbet-icon-button"
             onClick={() => setMenuOpen((open) => !open)}
             type="button"
@@ -69,9 +70,10 @@ export default function SmartbetTopBar() {
           </Link>
 
           <div className="smartbet-topbar__actions">
-            <button aria-label="Search" className="smartbet-icon-button" type="button">
+            <ThemeToggle />
+            <Link aria-label="Search" className="smartbet-icon-button" href="/search">
               <IconSearch />
-            </button>
+            </Link>
             {isAuthenticated ? (
               <>
                 <Link className="smartbet-login" href="/dashboard">
@@ -122,6 +124,7 @@ export default function SmartbetTopBar() {
               <Link
                 className={`smartbet-product-link ${active ? "is-active" : ""}`}
                 href={product.href}
+                aria-current={active ? "page" : undefined}
                 key={product.name}
               >
                 <Icon />
@@ -133,14 +136,10 @@ export default function SmartbetTopBar() {
       </nav>
 
       {menuOpen && (
-        <div className="smartbet-menu-panel">
+        <div className="smartbet-menu-panel" id="smartbet-menu">
           <div className="smartbet-menu-panel__inner">
             <strong>SMARTBET</strong>
-            {menuLinks.map((link) => (
-              <Link href={link.href} key={link.href} onClick={() => setMenuOpen(false)}>
-                {link.label}
-              </Link>
-            ))}
+            {menuGroups.map((group) => <nav key={group.title} aria-label={group.title} className="smartbet-menu-group"><h2>{group.title}</h2>{group.links.map((link) => <Link href={link.href} key={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setMenuOpen(false)}>{link.label}</Link>)}</nav>)}
           </div>
         </div>
       )}

@@ -37,10 +37,10 @@ const banners = [
   },
   {
     kicker: "Aviator",
-    title: "Cash out before it flies away",
-    copy: "Fly with Aviator and Crash games from UGX 500 a round.",
-    cta: "Play Aviator",
-    href: "/promotions",
+    title: "Explore the Aviator lobby",
+    copy: "Browse flight games and find your favorite providers.",
+    cta: "Explore Aviator",
+    href: "/aviator",
     background:
       "linear-gradient(120deg, #031627 0%, #0e7490 60%, #be123c 130%)",
   },
@@ -78,7 +78,7 @@ function SectionHeader({
 }
 
 function PromoBanner() {
-  const [activeIndex, setActiveIndex] = useState(2);
+  const [activeIndex, setActiveIndex] = useState(0);
   const banner = banners[activeIndex];
 
   return (

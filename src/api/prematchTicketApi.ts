@@ -42,6 +42,11 @@ export type TicketChangedOddDto = {
   betOption?: string;
   Line?: string | null;
   line?: string | null;
+  BookMakerId?: number | null;
+  bookMakerId?: number | null;
+  bookmakerId?: number | null;
+  ShortCode?: number | null;
+  shortCode?: number | null;
   Odd?: number;
   odd?: number;
   PostedOdd?: number | null;
@@ -142,17 +147,22 @@ export type ReceiptListItemDto = {
   totalOdds?: number;
 };
 
+const normalizeTicketResult = (
+  data: TicketResultDto | string | null | undefined
+): TicketResultDto | null =>
+  data && typeof data === "object" ? data : null;
+
 export const prematchTicketApi = {
   async placeTicket(
     request: PrematchTicketRequest,
     config?: ApiRequestConfig
   ): Promise<TicketResultDto | null> {
-    const response = await apiClient.post<TicketResultDto | undefined>(
+    const response = await apiClient.post<TicketResultDto | string | undefined>(
       "/Ticket",
       request,
       config
     );
-    return response.data ?? null;
+    return normalizeTicketResult(response.data);
   },
 
   async createBooking(

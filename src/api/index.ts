@@ -10,3 +10,4 @@ export {
   activeMatchesGet,
 } from "@/src/api/activeMatchesApiClient";
 export type { ActiveMatchesApiRequestConfig } from "@/src/api/activeMatchesApiClient";
+
