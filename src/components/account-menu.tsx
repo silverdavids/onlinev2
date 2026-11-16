@@ -71,9 +71,9 @@ export function AccountMenu() {
   }, [open]);
 
   const links = isAuthenticated ? authLinks : guestLinks;
-  const effectiveBonusBalance = bonuses?.BonusBalance ?? bonusBalance;
-  const activeBonuses = bonuses?.ActiveBonuses ?? [];
-  const bonusTransactions = bonuses?.Transactions ?? [];
+  const effectiveBonusBalance = bonusBalance;
+  const activeBonuses = bonuses?.wallets.filter((bonus) => bonus.status.toLowerCase() === "active") ?? [];
+  const bonusTransactions = bonuses?.transactions ?? [];
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -102,13 +102,13 @@ export function AccountMenu() {
                 )}
               </div>
               <p className="font-display text-2xl font-bold tabular-nums">
-                {authLoading || walletLoading ? "—" : formatUgx(balance ?? 0)}
+                {authLoading || walletLoading || balance === null ? "—" : formatUgx(balance)}
               </p>
               <p className="mt-0.5 text-xs font-semibold tabular-nums opacity-90">
-                Bonus: {authLoading || walletLoading ? "—" : formatUgx(effectiveBonusBalance)}
+                Bonus: {authLoading || walletLoading || effectiveBonusBalance === null ? "—" : formatUgx(effectiveBonusBalance)}
               </p>
-              {isAuthenticated && user?.email && (
-                <p className="mt-1 truncate text-xs opacity-80">{user.email}</p>
+              {isAuthenticated && (user?.username || user?.email) && (
+                <p className="mt-1 truncate text-xs opacity-80">{user.username || user.email}</p>
               )}
             </div>
           </div>
@@ -142,7 +142,11 @@ export function AccountMenu() {
                 Bonuses & Rewards
               </div>
               <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold tabular-nums text-accent">
-                {effectiveBonusBalance > 0 ? formatUgx(effectiveBonusBalance) : "Active"}
+                {effectiveBonusBalance === null
+                  ? "—"
+                  : effectiveBonusBalance > 0
+                    ? formatUgx(effectiveBonusBalance)
+                    : "Active"}
               </span>
             </button>
 
@@ -159,9 +163,13 @@ export function AccountMenu() {
                 variant="ghost"
                 onClick={async () => {
                   setOpen(false);
-                  await signOut();
-                  await refresh();
-                  toast.success("Signed out");
+                  try {
+                    await signOut();
+                    await refresh();
+                    toast.success("Signed out");
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Could not confirm sign out");
+                  }
                 }}
                 className="flex w-full items-center justify-start gap-3 rounded-md px-3 py-2.5 text-sm font-semibold hover:bg-muted"
               >
@@ -194,7 +202,7 @@ export function AccountMenu() {
                   Available Bonus Balance
                 </p>
                 <p className="font-display text-2xl font-bold tabular-nums">
-                  {formatUgx(effectiveBonusBalance)}
+                  {effectiveBonusBalance === null ? "—" : formatUgx(effectiveBonusBalance)}
                 </p>
               </div>
 
@@ -202,25 +210,29 @@ export function AccountMenu() {
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Active Promotions
                 </p>
-                {activeBonuses.length === 0 ? (
+                {!bonuses ? (
+                  <p className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
+                    Bonus details are unavailable.
+                  </p>
+                ) : activeBonuses.length === 0 ? (
                   <p className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
                     No active bonus promotions right now. Enter a promo code on deposit to claim.
                   </p>
                 ) : (
                   activeBonuses.map((b) => (
                     <div
-                      key={b.Id}
+                      key={b.walletId}
                       className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
                     >
                       <div>
-                        <p className="text-sm font-bold">{b.Name}</p>
+                        <p className="text-sm font-bold">{b.campaignName}</p>
                         <p className="text-xs text-muted-foreground">
-                          Status: <span className="font-semibold text-emerald-400">{b.Status}</span>
-                          {b.ExpiresAt ? ` · Exp ${b.ExpiresAt}` : ""}
+                          Status: <span className="font-semibold text-emerald-400">{b.status}</span>
+                          {b.expiryDate ? ` · Exp ${b.expiryDate}` : ""}
                         </p>
                       </div>
                       <span className="font-bold tabular-nums text-accent">
-                        {formatUgx(b.Amount)}
+                        {formatUgx(b.bonusBalance)}
                       </span>
                     </div>
                   ))
@@ -239,22 +251,22 @@ export function AccountMenu() {
                   <div className="space-y-2">
                     {bonusTransactions.map((tx) => (
                       <div
-                        key={tx.Id}
+                        key={tx.bonusTransactionId}
                         className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-xs"
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="truncate font-semibold text-foreground">{tx.Description}</p>
+                          <p className="truncate font-semibold text-foreground">{tx.description || tx.transactionType}</p>
                           <p className="text-[11px] text-muted-foreground">
-                            {tx.Type} · {new Date(tx.Date).toLocaleString()}
+                            {tx.transactionType} · {new Date(tx.createdAt).toLocaleString()}
                           </p>
                         </div>
                         <span
                           className={`shrink-0 font-bold tabular-nums ${
-                            tx.Amount >= 0 ? "text-emerald-400" : "text-rose-400"
+                          tx.amount >= 0 ? "text-emerald-400" : "text-rose-400"
                           }`}
                         >
-                          {tx.Amount >= 0 ? "+" : ""}
-                          {formatUgx(tx.Amount)}
+                          {tx.amount >= 0 ? "+" : ""}
+                          {formatUgx(tx.amount)}
                         </span>
                       </div>
                     ))}

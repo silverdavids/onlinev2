@@ -4,7 +4,7 @@
  * Integrates directly with:
  * - SmartBet Mobile Money Deposit API (POST /api/Online/MobileMoneyDepositRequest)
  * - Real-time USSD Payment Status Polling (GET /api/Online/DepositStatus/{code})
- * - Resilient ledger synchronization with Supabase transactions and wallets
+ * - Wallet status and financial confirmation from SmartBet
  */
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
@@ -24,10 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { formatUgx } from "@/lib/betting-data";
 import { useWallet } from "@/hooks/use-wallet";
-import { useAuth } from "@/hooks/use-auth";
-import { internalDeposit } from "@/modules/wallet/wallet.functions";
 import { ApiError, smartBetApi } from "@/lib/api-smartbet";
-import { recordWalletTransaction } from "@/lib/supabase-sportsbook";
 import { usePaymentPoller } from "@/hooks/use-payment-poller";
 
 export const Route = createFileRoute("/deposit")({
@@ -77,7 +74,6 @@ const quickAmounts = [2000, 5000, 10000, 20000, 50000, 100000];
 
 function DepositPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
   const { balance, bonusBalance, phoneNumber, loading, refresh, syncBalance } = useWallet();
   const [method, setMethod] = useState("mtn");
   const [phone, setPhone] = useState("0772000000");
@@ -114,28 +110,12 @@ function DepositPage() {
     setRedeemingVoucher(true);
     try {
       const res = await smartBetApi.redeemDeposit(cleanCode);
-      const credited = res?.amount || 25000;
+      const credited = res?.amount;
       const updatedBal = typeof res?.balance === "number" ? res.balance : res?.Balance;
-      if (typeof updatedBal === "number") {
-        syncBalance(updatedBal);
-      }
+      if (res?.success !== true || typeof credited !== "number" || typeof updatedBal !== "number")
+        throw new Error(res?.message || "SmartBet did not confirm the voucher redemption.");
+      syncBalance(updatedBal);
       void refresh();
-
-      // Mirror into Supabase when authenticated
-      if (isAuthenticated && user?.id) {
-        try {
-          await recordWalletTransaction({
-            userId: user.id,
-            type: "deposit",
-            direction: "credit",
-            amount: credited,
-            reference: `VOUCHER:${cleanCode}`,
-            metadata: { method: "voucher", code: cleanCode, status: "completed" },
-          });
-        } catch (logErr) {
-          console.warn("[Voucher] Supabase log notice:", logErr);
-        }
-      }
 
       toast.success(
         res?.message ||
@@ -165,39 +145,11 @@ function DepositPage() {
     try {
       // 1. Request deposit via SmartBet Mobile Money API (POST /api/Online/MobileMoneyDepositRequest)
       const res = await smartBetApi.requestMobileMoneyDeposit(amount, phone, promoCode || null);
-      const code =
-        res.code || res.transactionCode || `DEP-${Date.now().toString(36).toUpperCase()}`;
+      const code = res.code || res.transactionCode;
+      if (!code || String(res.status).toUpperCase() !== "PENDING")
+        throw new Error(res.message || "SmartBet did not confirm the deposit request.");
 
-      // 2. Mirror into internal PostgreSQL ledger via server function if signed in
-      if (isAuthenticated) {
-        try {
-          await (
-            internalDeposit as unknown as (args: {
-              data: { amount: number; reference?: string };
-            }) => Promise<{ transactionId: string }>
-          )({ data: { amount, reference: `${method.toUpperCase()}:${code}` } });
-        } catch {
-          // Safe if offline
-        }
-      }
-
-      // 3. Record pending transaction in Supabase
-      if (isAuthenticated && user?.id) {
-        try {
-          await recordWalletTransaction({
-            userId: user.id,
-            type: "deposit",
-            direction: "credit",
-            amount,
-            reference: code,
-            metadata: { phone, method, promoCode, status: "pending" },
-          });
-        } catch (txErr) {
-          console.warn("[Deposit] Supabase transaction record notice:", txErr);
-        }
-      }
-
-      // 4. Start real-time USSD polling (GET /api/Online/DepositStatus/{code})
+      // Poll the transaction status reported by SmartBet.
       poller.startPolling(code, amount, phone, method);
     } catch (err) {
       if (err instanceof ApiError && err.status && err.status >= 400 && err.status < 500) {
@@ -218,9 +170,9 @@ function DepositPage() {
           <p className="text-xs text-muted-foreground">
             Current balance:{" "}
             <span className="font-bold text-foreground">
-              {loading ? "—" : formatUgx(balance ?? 0)}
+              {loading || balance === null ? "—" : formatUgx(balance)}
             </span>
-            {bonusBalance > 0 && (
+            {bonusBalance !== null && bonusBalance > 0 && (
               <span className="ml-2 text-accent font-semibold">
                 · Bonus {formatUgx(bonusBalance)}
               </span>
@@ -358,7 +310,9 @@ function DepositPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">New Balance</span>
               <span className="font-bold text-accent">
-                {formatUgx(poller.newBalance ?? balance ?? 0)}
+                {poller.newBalance == null && balance === null
+                  ? "—"
+                  : formatUgx(poller.newBalance ?? balance ?? 0)}
               </span>
             </div>
           </div>

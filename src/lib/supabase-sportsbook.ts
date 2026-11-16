@@ -620,7 +620,9 @@ export async function updateTransactionStatus(
       .from("transactions")
       .update({
         status,
-        ...(metadata ? { metadata } : {}),
+        ...(metadata
+          ? { metadata: metadata as import("@/integrations/supabase/types").Json }
+          : {}),
       })
       .eq("reference", reference);
   } catch (err) {

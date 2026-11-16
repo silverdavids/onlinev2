@@ -6,12 +6,11 @@
  * Automatically monitors payment verification status via:
  *   GET /api/Online/DepositStatus/{code}
  * Tracks telecom USSD timeout countdown (90s window), live balance updates,
- * and synchronizes verified transactions with the Supabase ledger.
+ * from SmartBet.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { smartBetApi, type DepositStatusResponse } from "@/lib/api-smartbet";
-import { updateTransactionStatus } from "@/lib/supabase-sportsbook";
 
 export type PollerStatus = "idle" | "prompt_sent" | "polling" | "success" | "expired" | "failed";
 
@@ -82,13 +81,6 @@ export function usePaymentPoller(onSuccess?: (amount: number, balance?: number) 
             newBalance: typeof res.balance === "number" ? res.balance : null,
           }));
 
-          // Mark transaction completed in Supabase
-          updateTransactionStatus(code, "completed", {
-            verifiedAt: new Date().toISOString(),
-            status: "SUCCESSFUL",
-            finalBalance: res.balance,
-          }).catch(console.warn);
-
           if (onSuccessRef.current) {
             onSuccessRef.current(res.amount || currentAmount, res.balance);
           }
@@ -107,10 +99,6 @@ export function usePaymentPoller(onSuccess?: (amount: number, balance?: number) 
             errorMessage: "USSD payment was declined or cancelled on the phone.",
           }));
 
-          updateTransactionStatus(code, "failed", {
-            failedAt: new Date().toISOString(),
-            status: remoteStatus,
-          }).catch(console.warn);
           return;
         }
 

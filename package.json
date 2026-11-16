@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "test:auth": "node --test tests/auth-session.test.mjs tests/server-api-proxy.test.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

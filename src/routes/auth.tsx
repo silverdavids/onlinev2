@@ -16,8 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { smartBetApi } from "@/lib/api-smartbet";
-import { supabase } from "@/integrations/supabase/client";
-import { syncUserProfile } from "@/lib/supabase-sportsbook";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -73,74 +71,13 @@ function AuthPage() {
     const password = (form.elements.namedItem("login-pass") as HTMLInputElement).value;
 
     try {
-      let supabaseSuccess = false;
-      const emailToTry = loginIdentifier.includes("@")
-        ? loginIdentifier
-        : `${loginIdentifier.replace(/\s+/g, "")}@smartbet.ug`;
-
-      // 1. Supabase Authentication
-      try {
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: emailToTry,
-          password,
-        });
-
-        if (authData?.user) {
-          supabaseSuccess = true;
-          // Sync profile records
-          await syncUserProfile({
-            userId: authData.user.id,
-            email: authData.user.email,
-            displayName:
-              authData.user.user_metadata?.display_name ||
-              authData.user.email?.split("@")[0] ||
-              "Player",
-            phone: authData.user.user_metadata?.phone || null,
-            dateOfBirth: authData.user.user_metadata?.date_of_birth || null,
-          });
-        } else if (authError && !loginIdentifier.includes("@")) {
-          // If phone was entered, try looking up the profile to find email
-          const { data: phoneProfile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("phone", loginIdentifier)
-            .maybeSingle();
-
-          if (phoneProfile?.id) {
-            // Found profile matching phone
-            console.log("[Auth] Found user profile for phone", loginIdentifier);
-          }
-        }
-      } catch (sbErr) {
-        console.warn("[Auth] Supabase auth attempt notice:", sbErr);
+      const loginResponse = await smartBetApi.login(loginIdentifier, password, true);
+      if (!loginResponse.success) {
+        throw new Error(loginResponse.message || "SmartBet login failed.");
       }
-
-      // 2. Also authenticate with SmartBet Online API
-      let smartBetSuccess = false;
-      try {
-        const user = await smartBetApi.login(loginIdentifier, password, true);
-        if (user) {
-          smartBetSuccess = true;
-          localStorage.setItem("smartbet_active_user", JSON.stringify(user));
-        }
-      } catch (apiErr) {
-        console.warn("[Auth] SmartBet API login notice:", apiErr);
+      if (!(await refreshAuth())) {
+        throw new Error("SmartBet could not validate the login session.");
       }
-
-      // Fallback local session if both networks are in mock mode
-      if (!supabaseSuccess && !smartBetSuccess) {
-        localStorage.setItem(
-          "smartbet_active_user",
-          JSON.stringify({
-            UserId: `u-${Date.now().toString(36)}`,
-            UserName: loginIdentifier,
-            Email: emailToTry,
-            Balance: 50000,
-          }),
-        );
-      }
-
-      await refreshAuth();
       await refresh();
       toast.success("Welcome back to SMARTBET!");
       router.navigate({ to: "/" });
@@ -157,106 +94,9 @@ function AuthPage() {
       toast.error("You must confirm you are 25 or older");
       return;
     }
-
-    setPending(true);
-    const form = e.currentTarget;
-    const email = (form.elements.namedItem("reg-email") as HTMLInputElement).value.trim();
-    const password = (form.elements.namedItem("reg-pass") as HTMLInputElement).value;
-    const phone = (form.elements.namedItem("reg-phone") as HTMLInputElement).value.trim();
-    const firstName = (form.elements.namedItem("reg-fname") as HTMLInputElement).value.trim();
-    const surName = (form.elements.namedItem("reg-sname") as HTMLInputElement).value.trim();
-    const userName = (form.elements.namedItem("reg-uname") as HTMLInputElement).value.trim();
-    const nin = (form.elements.namedItem("reg-nin") as HTMLInputElement).value.trim();
-    const dob = (form.elements.namedItem("reg-dob") as HTMLInputElement).value;
-    const promo = (form.elements.namedItem("reg-promo") as HTMLInputElement)?.value.trim() || null;
-
-    setRegData({ phone, email, userName, pass: password });
-
-    try {
-      const displayName = `${firstName} ${surName}`;
-
-      // 1. Supabase Authentication Sign Up & User Profile Storage
-      try {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              phone,
-              display_name: displayName,
-              date_of_birth: dob,
-              nin,
-              username: userName,
-              promo,
-            },
-          },
-        });
-
-        if (signUpError) {
-          console.warn("[Auth] Supabase signUp warning:", signUpError.message);
-        }
-
-        if (signUpData?.user) {
-          await syncUserProfile({
-            userId: signUpData.user.id,
-            displayName,
-            phone,
-            dateOfBirth: dob,
-            nin,
-            email,
-          });
-        }
-      } catch (sbErr) {
-        console.warn("[Auth] Supabase registration sync notice:", sbErr);
-      }
-
-      // 2. Call SmartBet Online Register API
-      let requiresOtp = false;
-      try {
-        const res = await smartBetApi.register({
-          email,
-          phoneNumber: phone,
-          userName,
-          NIN: nin,
-          dob,
-          FirstName: firstName,
-          SurName: surName,
-          PromoCode: promo,
-        });
-
-        if (res.otpExpiry || res.message?.toLowerCase().includes("otp")) {
-          requiresOtp = true;
-        }
-      } catch (apiErr) {
-        console.warn("[Auth] Register API notice:", apiErr);
-      }
-
-      // Store local user cache
-      localStorage.setItem(
-        "smartbet_active_user",
-        JSON.stringify({
-          UserId: `u-${Date.now().toString(36)}`,
-          UserName: userName,
-          Email: email,
-          PhoneNumber: phone,
-          Balance: 0,
-        }),
-      );
-
-      await refreshAuth();
-      await refresh();
-      if (requiresOtp) {
-        setRegStep("otp");
-        toast.info(`Verification code sent to ${phone}`);
-      } else {
-        setRegStep("success");
-        toast.success("Account created successfully!");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Registration failed");
-    } finally {
-      setPending(false);
-    }
+    toast.error(
+      "Registration is unavailable until SmartBet's registration and OTP contract is verified.",
+    );
   }
 
   async function handleVerifyOtp(e: React.FormEvent) {
@@ -265,18 +105,9 @@ function AuthPage() {
 
     setPending(true);
     try {
-      await smartBetApi.validateOtp(regData.phone, otpCode.trim());
-      await smartBetApi.verifyOtpAndSetPassword({
-        phoneNumber: regData.phone,
-        otpCode: otpCode.trim(),
-        newPassword: regData.pass,
-        confirmPassword: regData.pass,
-      });
-
-      await refreshAuth();
-      await refresh();
-      setRegStep("success");
-      toast.success("Phone verified and account activated!");
+      toast.error(
+        "OTP verification is unavailable until SmartBet's registration and OTP contract is verified.",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "OTP validation failed");
     } finally {
@@ -290,14 +121,9 @@ function AuthPage() {
 
     setPending(true);
     try {
-      await smartBetApi.setNewPassword({
-        username: forgotPhone,
-        NewPassword: forgotNewPass,
-        ConfirmPassword: forgotNewPass,
-        Code: forgotCode,
-      });
-      toast.success("Password reset successfully! Please sign in.");
-      setShowForgot(false);
+      toast.error(
+        "Password reset is unavailable until SmartBet's password reset contract is verified.",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Password reset failed");
     } finally {

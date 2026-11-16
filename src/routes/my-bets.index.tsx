@@ -8,11 +8,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { ChevronRight, Receipt, RotateCw } from "lucide-react";
-import { useBetSlip, type PlacedBet } from "@/lib/betslip";
+import type { PlacedBet } from "@/lib/betslip";
 import { formatUgx } from "@/lib/betting-data";
 import { smartBetApi } from "@/lib/api-smartbet";
-import { fetchUserBetTickets } from "@/lib/supabase-sportsbook";
-import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/my-bets/")({
   head: () => ({
@@ -45,8 +43,6 @@ const filters = [
 ] as const;
 
 function MyBets() {
-  const { bets: localBets } = useBetSlip();
-  const { user } = useAuth();
   const [filter, setFilter] = useState<"open" | "settled">("open");
   const [remoteBets, setRemoteBets] = useState<PlacedBet[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,22 +50,7 @@ function MyBets() {
   const loadRemoteBets = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch tickets from local storage
-      let localSaved: PlacedBet[] = [];
-      try {
-        const raw = localStorage.getItem("smartbet_placed_bets");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) localSaved = parsed;
-        }
-      } catch {
-        // Safe
-      }
-
-      // 2. Fetch tickets from Supabase database (transactions & audit_log)
-      const supabaseTickets = await fetchUserBetTickets(user?.id);
-
-      // 3. Fetch from SmartBet online API if available
+      // Fetch history only from the SmartBet backend.
       let serverRows: Array<{
         ReceiptId?: string | number;
         BookingCode?: string;
@@ -84,32 +65,40 @@ function MyBets() {
       try {
         serverRows = (await smartBetApi.getMyBets()) as typeof serverRows;
       } catch {
-        // Safe if offline
+        setRemoteBets([]);
+        return;
       }
 
       const adaptedMap = new Map<string, PlacedBet>();
-      [...localSaved, ...supabaseTickets].forEach((b) => {
-        adaptedMap.set(b.id || b.code, b);
-      });
 
       if (Array.isArray(serverRows) && serverRows.length > 0) {
         serverRows.forEach((row) => {
-          const id = String(row.ReceiptId || row.BookingCode || Math.random());
-          const code = String(row.BookingCode || row.ReceiptId || "SB-REC");
-          const existing = adaptedMap.get(id) || adaptedMap.get(code);
+          const idValue = row.ReceiptId || row.BookingCode;
+          const codeValue = row.BookingCode || row.ReceiptId;
+          if (
+            !idValue ||
+            !codeValue ||
+            typeof row.Stake !== "number" ||
+            typeof row.Odds !== "number" ||
+            typeof row.Payout !== "number" ||
+            !["open", "won", "lost"].includes(String(row.Status || "").toLowerCase())
+          )
+            return;
+          const id = String(idValue);
+          const code = String(codeValue);
 
           const rawSelections =
             Array.isArray(row.selections) && row.selections.length > 0
               ? (row.selections as Array<Record<string, unknown>>)
-              : (existing?.selections as unknown as Array<Record<string, unknown>>) || [];
+              : [];
 
           const selections = rawSelections.map((leg, idx) => ({
-            id: String(leg.id || `leg-${id}-${idx}`),
-            matchId: String(leg.matchId || 123456),
-            match: String(leg.match || leg.MatchName || `Match #${leg.matchId || 123456}`),
-            market: String(leg.market || leg.betCategory || "1X2"),
-            pick: String(leg.pick || leg.betOption || "1"),
-            odds: Number(leg.odds || leg.odd || 1.8),
+            id: String(leg["id"] || `leg-${id}-${idx}`),
+            matchId: String(leg["matchId"] || ""),
+            match: String(leg["match"] || leg["MatchName"] || ""),
+            market: String(leg["market"] || leg["betCategory"] || ""),
+            pick: String(leg["pick"] || leg["betOption"] || ""),
+            odds: Number(leg["odds"] ?? leg["odd"]),
           }));
 
           adaptedMap.set(id, {
@@ -117,15 +106,11 @@ function MyBets() {
             code,
             placedAt: row.Date
               ? new Date(row.Date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-              : existing?.placedAt || "Recent",
-            stake: row.Stake || existing?.stake || 1000,
-            totalOdds: row.Odds || existing?.totalOdds || 2.0,
-            potential: row.Payout || existing?.potential || 2000,
-            status: (row.Status?.toLowerCase() === "won"
-              ? "won"
-              : row.Status?.toLowerCase() === "lost"
-                ? "lost"
-                : "open") as "open" | "won" | "lost",
+              : "",
+            stake: row.Stake,
+            totalOdds: row.Odds,
+            potential: row.Payout,
+            status: String(row.Status).toLowerCase() as "open" | "won" | "lost",
             selections,
           });
         });
@@ -133,23 +118,17 @@ function MyBets() {
 
       setRemoteBets(Array.from(adaptedMap.values()));
     } catch (err) {
-      console.warn("[MyBets] Failed to load remote tickets:", err);
+      setRemoteBets([]);
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, []);
 
   useEffect(() => {
     loadRemoteBets();
   }, [loadRemoteBets]);
 
-  const combinedBets = [...localBets];
-  // Merge remote bets not already in local
-  for (const rb of remoteBets) {
-    if (!combinedBets.some((b) => b.code === rb.code || b.id === rb.id)) {
-      combinedBets.push(rb);
-    }
-  }
+  const combinedBets = remoteBets;
 
   const visible = combinedBets.filter((b) =>
     filter === "open" ? b.status === "open" : b.status !== "open",

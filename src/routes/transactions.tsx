@@ -116,7 +116,7 @@ function TransactionsPage() {
             <span className="font-bold text-foreground">
               {balance !== null ? formatUgx(balance) : "—"}
             </span>
-            {bonusBalance > 0 && (
+            {bonusBalance !== null && bonusBalance > 0 && (
               <span className="ml-2 font-semibold text-accent">
                 · Bonus {formatUgx(bonusBalance)}
               </span>
@@ -242,7 +242,7 @@ function TransactionsPage() {
                         <span>·</span>
                         <span>{formatWhen(row.Date)}</span>
                         <span>·</span>
-                        <span>Balance: {formatUgx(row.Balance)}</span>
+                        <span>Balance: {row.Balance === null ? "—" : formatUgx(row.Balance)}</span>
                       </div>
                     </div>
                     <span
@@ -295,48 +295,48 @@ function TransactionsPage() {
           <div className="rounded-lg brand-gradient p-4 text-surface-foreground">
             <p className="text-xs uppercase tracking-wide opacity-80">Bonus Wallet Balance</p>
             <p className="font-display text-2xl font-bold tabular-nums">
-              {formatUgx(bonuses?.BonusBalance ?? bonusBalance)}
+              {bonusBalance === null ? "—" : formatUgx(bonusBalance)}
             </p>
           </div>
 
-          {bonuses?.ActiveBonuses && bonuses.ActiveBonuses.length > 0 && (
+          {bonuses?.wallets.filter((bonus) => bonus.status.toLowerCase() === "active").length ? (
             <div className="space-y-2">
               <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Active Bonuses
               </p>
-              {bonuses.ActiveBonuses.map((b) => (
+              {bonuses.wallets.filter((bonus) => bonus.status.toLowerCase() === "active").map((b) => (
                 <div
-                  key={b.Id}
+                  key={b.walletId}
                   className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
                 >
                   <div>
-                    <p className="text-sm font-bold">{b.Name}</p>
+                    <p className="text-sm font-bold">{b.campaignName}</p>
                     <p className="text-xs text-muted-foreground">
-                      Status: <span className="font-semibold text-accent">{b.Status}</span>
+                      Status: <span className="font-semibold text-accent">{b.status}</span>
                     </p>
                   </div>
-                  <span className="font-bold tabular-nums text-accent">{formatUgx(b.Amount)}</span>
+                  <span className="font-bold tabular-nums text-accent">{formatUgx(b.bonusBalance)}</span>
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
 
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Bonus Transactions
             </p>
-            {bonuses?.Transactions && bonuses.Transactions.length > 0 ? (
+            {bonuses?.transactions && bonuses.transactions.length > 0 ? (
               <div className="overflow-hidden rounded-lg border border-border bg-card divide-y divide-border">
-                {bonuses.Transactions.map((bt) => (
-                  <div key={bt.Id} className="flex items-center justify-between px-3 py-3">
+                {bonuses.transactions.map((bt) => (
+                  <div key={bt.bonusTransactionId} className="flex items-center justify-between px-3 py-3">
                     <div>
-                      <p className="text-sm font-semibold">{bt.Description}</p>
+                      <p className="text-sm font-semibold">{bt.description || bt.transactionType}</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {bt.Type} · {formatWhen(bt.Date)}
+                        {bt.transactionType} · {formatWhen(bt.createdAt)}
                       </p>
                     </div>
                     <span className="font-bold tabular-nums text-accent">
-                      +{formatUgx(bt.Amount)}
+                      {bt.amount >= 0 ? "+" : ""}{formatUgx(bt.amount)}
                     </span>
                   </div>
                 ))}

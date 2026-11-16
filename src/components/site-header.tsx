@@ -18,7 +18,7 @@ import { useWallet } from "@/hooks/use-wallet";
 
 export function SiteHeader() {
   const { balance, loading } = useWallet();
-  const display = loading ? "—" : formatUgx(balance ?? 0);
+  const display = loading || balance === null ? "—" : formatUgx(balance);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 brand-gradient text-surface-foreground">

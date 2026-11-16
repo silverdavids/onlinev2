@@ -6,9 +6,8 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { useBetSlip, type PlacedBet } from "@/lib/betslip";
+import type { PlacedBet, Selection } from "@/lib/betslip";
 import { formatUgx } from "@/lib/betting-data";
-import { fetchUserBetTickets, retrieveBookingCode } from "@/lib/supabase-sportsbook";
 import { smartBetApi } from "@/lib/api-smartbet";
 
 export const Route = createFileRoute("/my-bets/$betId")({
@@ -38,99 +37,69 @@ const statusStyles: Record<string, string> = {
 
 function BetReceipt() {
   const { betId } = useParams({ from: "/my-bets/$betId" });
-  const { bets } = useBetSlip();
   const [fetchedBet, setFetchedBet] = useState<PlacedBet | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const bet = bets.find((b) => b.id === betId || b.code === betId) || fetchedBet;
+  const bet = fetchedBet;
 
   useEffect(() => {
-    if (bet) return;
+    setFetchedBet(null);
     let mounted = true;
     setLoading(true);
 
     async function loadReceipt() {
       try {
-        const all = await fetchUserBetTickets();
-        const found = all.find((b) => b.id === betId || b.code === betId);
-        if (found && mounted) {
-          setFetchedBet(found);
-          setLoading(false);
+        const remoteReceipt = (await smartBetApi.getReceiptById(betId)) as {
+          ReceiptId?: string | number;
+          BookingCode?: string;
+          TotalStake?: number;
+          TotalOdds?: number;
+          PotentialPayout?: number;
+          Status?: string;
+          Date?: string;
+        };
+        const stake = remoteReceipt?.TotalStake;
+        const odds = remoteReceipt?.TotalOdds;
+        const payout = remoteReceipt?.PotentialPayout;
+        const status = String(remoteReceipt?.Status || "").toLowerCase();
+        if (
+          remoteReceipt?.ReceiptId == null ||
+          typeof stake !== "number" ||
+          typeof odds !== "number" ||
+          typeof payout !== "number" ||
+          !["open", "won", "lost"].includes(status)
+        )
           return;
-        }
 
-        // Also check booking codes
-        const booking = await retrieveBookingCode(betId);
-        if (booking && mounted) {
+        const selectionResponse = await smartBetApi.getTicketSelections(betId);
+        const rawSelections = Array.isArray(selectionResponse)
+          ? selectionResponse
+          : (selectionResponse as { selections?: unknown[] } | null)?.selections || [];
+        const selections: Selection[] = rawSelections
+          .filter(
+            (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
+          )
+          .map((leg, index) => ({
+            id: String(leg["id"] || `leg-${remoteReceipt.ReceiptId}-${index}`),
+            matchId: String(leg["MatchId"] ?? leg["matchId"] ?? ""),
+            match: String(leg["MatchName"] ?? leg["match"] ?? ""),
+            market: String(leg["BetCategory"] ?? leg["market"] ?? ""),
+            pick: String(leg["BetOption"] ?? leg["pick"] ?? ""),
+            odds: Number(leg["Odd"] ?? leg["odds"]),
+          }));
+        if (mounted) {
           setFetchedBet({
-            id: booking.code,
-            code: booking.code,
-            placedAt: new Date(booking.createdAt).toLocaleDateString(),
-            stake: booking.stake,
-            totalOdds: booking.totalOdds,
-            potential: Math.round(booking.stake * booking.totalOdds),
-            status: "open",
-            selections: booking.selections,
+            id: String(remoteReceipt.ReceiptId),
+            code: String(remoteReceipt.BookingCode || remoteReceipt.ReceiptId),
+            placedAt: remoteReceipt.Date ? new Date(remoteReceipt.Date).toLocaleDateString() : "",
+            stake,
+            totalOdds: odds,
+            potential: payout,
+            status: status as "open" | "won" | "lost",
+            selections,
           });
-          setLoading(false);
-          return;
         }
-
-        // Also query SmartBet Online Receipt API
-        try {
-          const remoteReceipt = (await smartBetApi.getReceiptById(betId)) as {
-            ReceiptId?: string | number;
-            TotalStake?: number;
-            TotalOdds?: number;
-            PotentialPayout?: number;
-            Status?: string;
-            Date?: string;
-          };
-
-          let remoteSelections: Selection[] = [];
-          try {
-            const selRes = (await smartBetApi.getTicketSelections(betId)) as {
-              selections?: Selection[];
-            };
-            if (selRes && Array.isArray(selRes.selections)) {
-              remoteSelections = selRes.selections;
-            }
-          } catch {
-            // Ignore
-          }
-
-          if (remoteReceipt && (remoteReceipt.ReceiptId || remoteReceipt.TotalStake) && mounted) {
-            setFetchedBet({
-              id: String(remoteReceipt.ReceiptId || betId),
-              code: String(remoteReceipt.ReceiptId || betId),
-              placedAt: remoteReceipt.Date
-                ? new Date(remoteReceipt.Date).toLocaleDateString()
-                : "Recent",
-              stake: remoteReceipt.TotalStake || 2000,
-              totalOdds: remoteReceipt.TotalOdds || 3.5,
-              potential: remoteReceipt.PotentialPayout || 7000,
-              status: (remoteReceipt.Status?.toLowerCase() as "open" | "won" | "lost") || "open",
-              selections: remoteSelections.length
-                ? remoteSelections
-                : [
-                    {
-                      id: "leg-1",
-                      matchId: "m1",
-                      match: "Official Sportsbook Selection",
-                      market: "Match Odds",
-                      pick: "1",
-                      odds: remoteReceipt.TotalOdds || 3.5,
-                    },
-                  ],
-            });
-            setLoading(false);
-            return;
-          }
-        } catch {
-          // Fall through
-        }
-      } catch (err) {
-        console.warn("[Receipt] Failed to load receipt:", err);
+      } catch {
+        if (mounted) setFetchedBet(null);
       } finally {
         if (mounted) setLoading(false);
       }

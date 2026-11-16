@@ -5,7 +5,7 @@
  * - SmartBet Withdrawal Request API (POST /api/Online/WithdrawRequest)
  * - Two-factor SMS Challenge & Confirmation (POST /api/Online/ConfirmWithdrawAlt)
  * - Retail OTC branch cashout code generation (POST /api/Online/WithdrawAtBranch)
- * - Real-time ledger accounting in Supabase
+ * - Wallet status and financial confirmation from SmartBet
  */
 import { useState, useEffect } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
@@ -24,10 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { formatUgx } from "@/lib/betting-data";
 import { useWallet } from "@/hooks/use-wallet";
-import { useAuth } from "@/hooks/use-auth";
-import { internalWithdraw } from "@/modules/wallet/wallet.functions";
 import { ApiError, smartBetApi } from "@/lib/api-smartbet";
-import { recordWalletTransaction } from "@/lib/supabase-sportsbook";
 
 export const Route = createFileRoute("/withdraw")({
   head: () => ({
@@ -73,7 +70,6 @@ const quickWithdrawAmounts = [5000, 10000, 20000, 50000, 100000];
 
 function WithdrawPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
   const { balance, phoneNumber, loading, refresh, syncBalance } = useWallet();
   const [method, setMethod] = useState("mtn");
   const [phone, setPhone] = useState("0772000000");
@@ -118,35 +114,6 @@ function WithdrawPage() {
     return () => clearInterval(interval);
   }, [otpChallenge, otpTimer]);
 
-  async function recordDebitInLedgers(
-    txAmount: number,
-    reference: string,
-    meta: Record<string, unknown>,
-  ) {
-    if (!isAuthenticated || !user?.id) return;
-    try {
-      await (
-        internalWithdraw as unknown as (args: {
-          data: { amount: number; reference?: string };
-        }) => Promise<{ transactionId: string }>
-      )({ data: { amount: txAmount, reference } });
-    } catch {
-      // Safe if offline
-    }
-    try {
-      await recordWalletTransaction({
-        userId: user.id,
-        type: "withdrawal",
-        direction: "debit",
-        amount: txAmount,
-        reference,
-        metadata: meta,
-      });
-    } catch (err) {
-      console.warn("[Withdrawal] Supabase sync notice:", err);
-    }
-  }
-
   async function handleOtpConfirm(e: React.FormEvent) {
     e.preventDefault();
     if (!otpChallenge || !otpCode.trim()) return;
@@ -161,33 +128,25 @@ function WithdrawPage() {
         return;
       }
 
-      const txId = res.transactionId || `TX-${Date.now().toString(36).toUpperCase()}`;
+      if (remoteStatus !== "SUCCESSFUL" || !res.transactionId || typeof res.amount !== "number") {
+        toast.error(res.message || "SmartBet has not confirmed the withdrawal.");
+        return;
+      }
+      const txId = res.transactionId;
       if (typeof res.balance === "number") {
         syncBalance(res.balance);
       }
 
-      await recordDebitInLedgers(amount, `${method.toUpperCase()}:${phone}`, {
-        phone,
-        method,
-        challengeId: otpChallenge.challengeId,
-        transactionId: txId,
-        status: remoteStatus || "SUCCESSFUL",
-      });
-
       void refresh();
       setCompletedPayout({
         txId,
-        amount: Math.max(0, amount - fee),
+        amount: res.amount,
         phone,
-        isPending: remoteStatus === "PENDING" || remoteStatus === "UNKNOWN",
+        isPending: false,
       });
       setOtpChallenge(null);
       setOtpCode("");
-      toast.success(
-        remoteStatus === "PENDING"
-          ? "Withdrawal confirmed and is currently processing."
-          : "Withdrawal verified! Payout sent to Mobile Money.",
-      );
+      toast.success("Withdrawal verified! Payout sent to Mobile Money.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "OTP confirmation failed");
     } finally {
@@ -210,22 +169,20 @@ function WithdrawPage() {
     try {
       if (method === "branch") {
         const res = await smartBetApi.withdrawAtBranch(amount);
-        const code = res.code || res.Code || `BR-${Math.floor(Math.random() * 900000 + 100000)}`;
+        const code = res.code || res.Code;
+        const remoteStatus = String(res.status || "").toUpperCase();
+        if (!code || !["APPROVED", "SUCCESSFUL"].includes(remoteStatus)) {
+          throw new Error(res.message || "SmartBet did not confirm the branch withdrawal.");
+        }
 
         if (typeof res.balance === "number") {
           syncBalance(res.balance);
         }
 
-        await recordDebitInLedgers(amount, code, {
-          method: "branch",
-          branchCode: code,
-          type: "voucher",
-        });
-
         setBranchVoucher({
           code,
           amount,
-          expiresIn: res.expiresIn || "48 hours",
+          expiresIn: res.expiresIn || "",
         });
         void refresh();
         toast.success(`Branch voucher code generated: ${code}`);
@@ -255,29 +212,23 @@ function WithdrawPage() {
         return;
       }
 
+      if (remoteStatus !== "PENDING") {
+        toast.error(res.message || "SmartBet has not confirmed the withdrawal.");
+        return;
+      }
+
       if (typeof res.balance === "number") {
         syncBalance(res.balance);
       }
 
-      await recordDebitInLedgers(amount, `${method.toUpperCase()}:${phone}`, {
-        phone,
-        method,
-        requestId,
-        status: remoteStatus || "SUCCESSFUL",
-      });
-
       setCompletedPayout({
-        txId: res.transactionId || `TX-${Date.now().toString(36).toUpperCase()}`,
-        amount: Math.max(0, amount - fee),
+        txId: res.transactionId || requestId,
+        amount: typeof res.amount === "number" ? res.amount : amount,
         phone,
-        isPending: remoteStatus === "PENDING" || remoteStatus === "UNKNOWN",
+        isPending: true,
       });
       void refresh();
-      toast.success(
-        remoteStatus === "PENDING"
-          ? `Withdrawal of ${formatUgx(amount)} is pending telecom confirmation.`
-          : `Withdrawal of ${formatUgx(amount)} submitted successfully`,
-      );
+      toast.info(`Withdrawal of ${formatUgx(amount)} is pending telecom confirmation.`);
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message);
@@ -297,7 +248,7 @@ function WithdrawPage() {
           <p className="text-xs text-muted-foreground">
             Withdrawable balance:{" "}
             <span className="font-bold text-foreground">
-              {loading ? "—" : formatUgx(available)}
+              {loading || balance === null ? "—" : formatUgx(balance)}
             </span>
           </p>
         </div>

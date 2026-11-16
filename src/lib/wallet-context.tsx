@@ -11,22 +11,16 @@
  * - GET /api/Online/UserInfo
  * - GET /api/Account/Bonuses
  * - GET /api/Statement/User?userid=...
- * - Internal PostgreSQL / Supabase ledger fallback
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import {
-  getWalletBalance,
-  getWalletTransactions,
-  type WalletTransaction,
-} from "@/modules/wallet/wallet.functions";
+import type { WalletTransaction } from "@/modules/wallet/wallet.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { smartBetApi, type BonusesResponse, type StatementRow } from "@/lib/api-smartbet";
-import { supabase } from "@/integrations/supabase/client";
 
 export type WalletContextValue = {
   balance: number | null;
-  bonusBalance: number;
+  bonusBalance: number | null;
   accountId: string | null;
   userId: string | null;
   phoneNumber: string | null;
@@ -43,7 +37,7 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [balance, setBalance] = useState<number | null>(null);
-  const [bonusBalance, setBonusBalance] = useState<number>(0);
+  const [bonusBalance, setBonusBalance] = useState<number | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
@@ -57,7 +51,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     if (!isAuthenticated) {
       setBalance(null);
-      setBonusBalance(0);
+      setBonusBalance(null);
       setAccountId(null);
       setUserId(null);
       setPhoneNumber(null);
@@ -68,6 +62,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setBalance(null);
+    setBonusBalance(null);
+    setAccountId(null);
+    setUserId(null);
+    setPhoneNumber(null);
+    setTransactions([]);
+    setStatement([]);
+    setBonuses(null);
+
     try {
       // 1. Fetch SmartBet Online UserInfo & Bonuses in parallel
       const [userInfoRes, bonusesRes] = await Promise.allSettled([
@@ -75,47 +78,33 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         smartBetApi.getBonuses(),
       ]);
 
-      let activeUid = user?.id || "";
-      let resolvedRemoteBalance = false;
-
       if (userInfoRes.status === "fulfilled" && userInfoRes.value) {
         const info = userInfoRes.value;
-        if (typeof info.Balance === "number") {
+        if (typeof info.Balance === "number" && Number.isFinite(info.Balance)) {
           setBalance(info.Balance);
-          resolvedRemoteBalance = true;
-          try {
-            const storedUser = localStorage.getItem("smartbet_active_user");
-            if (storedUser) {
-              const parsed = JSON.parse(storedUser);
-              parsed.Balance = info.Balance;
-              localStorage.setItem("smartbet_active_user", JSON.stringify(parsed));
-            }
-          } catch {
-            // Safe
-          }
-        }
-        if (typeof info.BonusBalance === "number") {
-          setBonusBalance(info.BonusBalance);
         }
         if (info.AccountId != null) setAccountId(String(info.AccountId));
         if (info.UserId) {
-          activeUid = String(info.UserId);
-          setUserId(activeUid);
+          setUserId(String(info.UserId));
         }
         if (info.PhoneNumber) setPhoneNumber(info.PhoneNumber);
       }
 
       if (bonusesRes.status === "fulfilled" && bonusesRes.value) {
-        setBonuses(bonusesRes.value);
-        if (typeof bonusesRes.value.BonusBalance === "number") {
-          setBonusBalance(bonusesRes.value.BonusBalance);
+        const { wallets, transactions } = bonusesRes.value;
+        if (Array.isArray(wallets) && Array.isArray(transactions)) {
+          const amounts = wallets.map((wallet) => wallet.bonusBalance);
+          if (amounts.every((amount) => typeof amount === "number" && Number.isFinite(amount))) {
+            setBonuses(bonusesRes.value);
+            setBonusBalance(amounts.reduce((total, amount) => total + amount, 0));
+          }
         }
       }
 
-      // 2. Fetch official statement rows from GET /api/Statement/User?userid=...
-      if (activeUid) {
+      // The backend scopes this endpoint to the authenticated user identity.
+      if (user?.id) {
         try {
-          const stmtRows = await smartBetApi.getStatement(activeUid);
+          const stmtRows = await smartBetApi.getStatement();
           if (Array.isArray(stmtRows)) {
             setStatement(stmtRows);
           }
@@ -124,74 +113,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // 3. Also load Supabase internal ledger transactions if signed in
-      if (user) {
-        let bal: number | null = null;
-        let txs: WalletTransaction[] = [];
-
-        try {
-          bal = await getWalletBalance();
-          txs = await (
-            getWalletTransactions as unknown as (args: {
-              data?: { cursor?: string; limit?: number };
-            }) => Promise<WalletTransaction[]>
-          )({ data: {} });
-        } catch {
-          try {
-            const { data: dbTxs } = await supabase
-              .from("transactions")
-              .select("*")
-              .eq("user_id", user.id)
-              .order("created_at", { ascending: false })
-              .limit(50);
-
-            if (dbTxs && dbTxs.length > 0) {
-              txs = dbTxs.map((row) => ({
-                id: row.id,
-                type: row.type,
-                status: row.status,
-                direction: row.direction,
-                amount: Number(row.amount),
-                currency: row.currency,
-                reference: row.reference,
-                metadata: (row.metadata || {}) as Record<string, string | number | boolean | null>,
-                created_at: row.created_at,
-              }));
-
-              let computed = 0;
-              for (const t of txs) {
-                if (t.direction === "credit") computed += t.amount;
-                else if (t.direction === "debit") computed -= t.amount;
-              }
-              bal = Math.max(0, computed);
-            }
-          } catch {
-            // Supabase table unavailable
-          }
-        }
-
-        if (!resolvedRemoteBalance && bal !== null) {
-          setBalance(bal);
-        }
-        setTransactions(txs);
-      }
-
-      if (!resolvedRemoteBalance) {
-        try {
-          const storedUser = localStorage.getItem("smartbet_active_user");
-          if (storedUser) {
-            const parsed = JSON.parse(storedUser);
-            if (typeof parsed.Balance === "number") {
-              setBalance(parsed.Balance);
-            }
-            if (parsed.PhoneNumber) setPhoneNumber(parsed.PhoneNumber);
-          }
-        } catch {
-          // Ignore
-        }
-      }
+      setTransactions([]);
     } catch (err) {
-      console.warn("[WalletProvider] Refresh error:", err);
+      setBalance(null);
+      setBonusBalance(null);
+      setAccountId(null);
+      setUserId(null);
+      setPhoneNumber(null);
+      setTransactions([]);
+      setStatement([]);
+      setBonuses(null);
     } finally {
       setLoading(false);
     }
@@ -208,16 +139,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const syncBalance = useCallback((newBalance: number) => {
     if (!Number.isFinite(newBalance)) return;
     setBalance(newBalance);
-    try {
-      const storedUser = localStorage.getItem("smartbet_active_user");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        parsed.Balance = newBalance;
-        localStorage.setItem("smartbet_active_user", JSON.stringify(parsed));
-      }
-    } catch {
-      // Safe
-    }
   }, []);
 
   return (
