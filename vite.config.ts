@@ -79,6 +79,9 @@ async function proxyDevelopmentRequest(
 }
 
 export default defineConfig({
+  nitro: {
+    preset: "node-server",
+  },
   plugins: [smartBetDevelopmentProxy()],
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
