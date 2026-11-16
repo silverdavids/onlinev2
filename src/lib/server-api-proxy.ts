@@ -94,6 +94,22 @@ export async function handleApiProxy(request: Request): Promise<Response> {
     else headers.delete("cookie");
   }
   headers.set("accept", request.headers.get("accept") || "application/json");
+    // Optional Host override for local IIS Express testing in Docker.
+  // Never enable this setting in production.
+  // Explicit opt-in for local IIS Express testing from Docker.
+  const localBackendHost =
+    typeof process !== "undefined"
+      ? process.env["SMARTBET_LOCAL_BACKEND_HOST"]
+      : undefined;
+
+  if (
+    base.protocol === "http:" &&
+    base.hostname === "host.docker.internal" &&
+    base.port === "49191" &&
+    localBackendHost === "localhost:49191"
+  ) {
+    headers.set("host", localBackendHost);
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
