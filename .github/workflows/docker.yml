@@ -2,9 +2,10 @@ name: Build SmartBet Test Frontend
 
 on:
   workflow_dispatch:
-  push:
+   push:
     branches:
       - integration/smartbet-auth
+      - integration/develop-api-contracts
     paths:
       - "Dockerfile"
       - ".dockerignore"
