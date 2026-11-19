@@ -72,7 +72,7 @@ function WithdrawPage() {
   const router = useRouter();
   const { balance, phoneNumber, loading, refresh, syncBalance } = useWallet();
   const [method, setMethod] = useState("mtn");
-  const [phone, setPhone] = useState("0772000000");
+  const [phone, setPhone] = useState("");
   const [phoneEdited, setPhoneEdited] = useState(false);
   const [amount, setAmount] = useState(10000);
   const [pending, setPending] = useState(false);
@@ -102,7 +102,6 @@ function WithdrawPage() {
     }
   }, [phoneEdited, phoneNumber]);
 
-  const fee = Math.round(amount * 0.01);
   const available = balance ?? 0;
 
   // Countdown timer for SMS OTP
@@ -128,7 +127,11 @@ function WithdrawPage() {
         return;
       }
 
-      if (remoteStatus !== "SUCCESSFUL" || !res.transactionId || typeof res.amount !== "number") {
+      if (
+        !["SUCCESSFUL", "PENDING", "UNKNOWN"].includes(remoteStatus) ||
+        !res.transactionId ||
+        typeof res.amount !== "number"
+      ) {
         toast.error(res.message || "SmartBet has not confirmed the withdrawal.");
         return;
       }
@@ -142,11 +145,12 @@ function WithdrawPage() {
         txId,
         amount: res.amount,
         phone,
-        isPending: false,
+        isPending: remoteStatus !== "SUCCESSFUL",
       });
       setOtpChallenge(null);
       setOtpCode("");
-      toast.success("Withdrawal verified! Payout sent to Mobile Money.");
+      if (remoteStatus === "SUCCESSFUL") toast.success("SmartBet confirmed the payout.");
+      else toast.info("Verification accepted. Payout confirmation is still pending.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "OTP confirmation failed");
     } finally {
@@ -212,7 +216,7 @@ function WithdrawPage() {
         return;
       }
 
-      if (remoteStatus !== "PENDING") {
+      if (!["PENDING", "UNKNOWN"].includes(remoteStatus)) {
         toast.error(res.message || "SmartBet has not confirmed the withdrawal.");
         return;
       }
@@ -454,11 +458,8 @@ function WithdrawPage() {
             </span>
             <button
               type="button"
-              disabled={otpTimer > 0}
-              onClick={() => {
-                setOtpTimer(60);
-                toast.info("A new verification code has been dispatched.");
-              }}
+              disabled
+              title="The current backend does not expose a verified withdrawal-code resend endpoint."
               className="font-semibold text-accent hover:underline disabled:opacity-40"
             >
               Resend Code
@@ -576,15 +577,15 @@ function WithdrawPage() {
             {method !== "branch" && (
               <div className="space-y-1 rounded-md bg-secondary/40 p-3 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Telecom network fee (1%)</span>
+                  <span className="text-muted-foreground">Telecom network fee</span>
                   <span className="font-semibold tabular-nums text-muted-foreground">
-                    {formatUgx(fee)}
+                    Not quoted by SmartBet
                   </span>
                 </div>
                 <div className="flex justify-between border-t border-border pt-1">
-                  <span className="text-muted-foreground">You receive</span>
+                  <span className="text-muted-foreground">Requested payout</span>
                   <span className="font-bold tabular-nums text-foreground">
-                    {formatUgx(Math.max(0, amount - fee))}
+                    {formatUgx(amount)}
                   </span>
                 </div>
               </div>

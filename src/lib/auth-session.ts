@@ -21,7 +21,14 @@ export type SmartBetCheckLoginPayload = {
 export function normalizeSmartBetCheckLogin(
   response: SmartBetCheckLoginPayload | null,
 ): SmartBetSessionUser | null {
-  if (!response?.authenticated || !response.user?.id || !response.user.username) return null;
+  if (
+    response?.authenticated !== true ||
+    typeof response.user?.id !== "string" ||
+    !response.user.id.trim() ||
+    typeof response.user.username !== "string" ||
+    !response.user.username.trim()
+  )
+    return null;
   return {
     UserId: response.user.id,
     UserName: response.user.username,

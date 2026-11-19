@@ -1,12 +1,13 @@
+import { useAuth } from "@/hooks/use-auth";
 /**
  * routes/my-bets.$betId.tsx — BET RECEIPT detail page (/my-bets/:betId).
  * Shows every leg of one placed bet plus stake/odds/payout summary.
- * Reads from the bet slip context; replace with a bet-by-id API fetch.
+ * Uses the identity-scoped /api/Online/MyBets/{id} endpoint and embedded Bets.
  */
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import type { PlacedBet, Selection } from "@/lib/betslip";
+import type { PlacedBet } from "@/lib/betslip";
 import { formatUgx } from "@/lib/betting-data";
 import { smartBetApi } from "@/lib/api-smartbet";
 
@@ -33,9 +34,13 @@ const statusStyles: Record<string, string> = {
   open: "bg-secondary text-secondary-foreground",
   won: "bg-accent text-accent-foreground",
   lost: "bg-muted text-muted-foreground",
+  refunded: "bg-secondary text-secondary-foreground",
+  cancelled: "bg-muted text-muted-foreground",
 };
 
 function BetReceipt() {
+  const { user } = useAuth();
+  const userId = user?.id;
   const { betId } = useParams({ from: "/my-bets/$betId" });
   const [fetchedBet, setFetchedBet] = useState<PlacedBet | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,61 +48,15 @@ function BetReceipt() {
 
   useEffect(() => {
     setFetchedBet(null);
+    setLoading(false);
+    if (!userId) return;
     let mounted = true;
     setLoading(true);
 
     async function loadReceipt() {
       try {
-        const remoteReceipt = (await smartBetApi.getReceiptById(betId)) as {
-          ReceiptId?: string | number;
-          BookingCode?: string;
-          TotalStake?: number;
-          TotalOdds?: number;
-          PotentialPayout?: number;
-          Status?: string;
-          Date?: string;
-        };
-        const stake = remoteReceipt?.TotalStake;
-        const odds = remoteReceipt?.TotalOdds;
-        const payout = remoteReceipt?.PotentialPayout;
-        const status = String(remoteReceipt?.Status || "").toLowerCase();
-        if (
-          remoteReceipt?.ReceiptId == null ||
-          typeof stake !== "number" ||
-          typeof odds !== "number" ||
-          typeof payout !== "number" ||
-          !["open", "won", "lost"].includes(status)
-        )
-          return;
-
-        const selectionResponse = await smartBetApi.getTicketSelections(betId);
-        const rawSelections = Array.isArray(selectionResponse)
-          ? selectionResponse
-          : (selectionResponse as { selections?: unknown[] } | null)?.selections || [];
-        const selections: Selection[] = rawSelections
-          .filter(
-            (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
-          )
-          .map((leg, index) => ({
-            id: String(leg["id"] || `leg-${remoteReceipt.ReceiptId}-${index}`),
-            matchId: String(leg["MatchId"] ?? leg["matchId"] ?? ""),
-            match: String(leg["MatchName"] ?? leg["match"] ?? ""),
-            market: String(leg["BetCategory"] ?? leg["market"] ?? ""),
-            pick: String(leg["BetOption"] ?? leg["pick"] ?? ""),
-            odds: Number(leg["Odd"] ?? leg["odds"]),
-          }));
-        if (mounted) {
-          setFetchedBet({
-            id: String(remoteReceipt.ReceiptId),
-            code: String(remoteReceipt.BookingCode || remoteReceipt.ReceiptId),
-            placedAt: remoteReceipt.Date ? new Date(remoteReceipt.Date).toLocaleDateString() : "",
-            stake,
-            totalOdds: odds,
-            potential: payout,
-            status: status as "open" | "won" | "lost",
-            selections,
-          });
-        }
+        const remoteReceipt = await smartBetApi.getReceiptById(betId);
+        if (mounted) setFetchedBet(remoteReceipt);
       } catch {
         if (mounted) setFetchedBet(null);
       } finally {
@@ -109,7 +68,7 @@ function BetReceipt() {
     return () => {
       mounted = false;
     };
-  }, [bet, betId]);
+  }, [betId, userId]);
 
   return (
     <main className="mx-auto max-w-3xl px-3 py-4">
@@ -122,7 +81,7 @@ function BetReceipt() {
 
       {!bet ? (
         <p className="rounded-lg border border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
-          This receipt is no longer available.
+          {loading ? "Loading receipt..." : "This receipt is no longer available."}
         </p>
       ) : (
         <article className="overflow-hidden rounded-lg border border-border bg-card">

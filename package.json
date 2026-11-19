@@ -9,6 +9,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "test:auth": "node --test tests/auth-session.test.mjs tests/server-api-proxy.test.mjs",
+    "test:integration": "node --test tests/*.test.mjs",
+    "typecheck:integration": "node tests/check-typecheck-regressions.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

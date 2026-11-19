@@ -38,8 +38,9 @@ function SlipBody() {
     loadBookingCode,
     loading,
     settings,
+    settingsReady,
+    bookingCode,
   } = useBetSlip();
-  const [bookingCode, setBookingCode] = useState<string | null>(null);
   const [inputCode, setInputCode] = useState("");
   const [loadingCode, setLoadingCode] = useState(false);
   const [actionPending, setActionPending] = useState(false);
@@ -206,7 +207,7 @@ function SlipBody() {
 
         {bonusPercent > 0 && (
           <div className="flex items-center justify-between text-[0.6rem] font-semibold text-amber-500">
-            <span>Multi-bet Boost ({bonusPercent}%)</span>
+            <span>Estimated multi-bet Boost ({bonusPercent}%)</span>
             <span className="text-[0.7rem] font-bold tabular-nums text-amber-500">
               +{formatUgx(bonusAmount)}
             </span>
@@ -214,7 +215,7 @@ function SlipBody() {
         )}
 
         <div className="flex items-center justify-between text-[0.6rem] font-bold text-muted-foreground pt-1 border-t border-border">
-          <span>Total Return</span>
+          <span>Estimated Total Return</span>
           <span className="text-[0.75rem] font-black tabular-nums text-accent">
             {formatUgx(totalReturnWithBonus)}
           </span>
@@ -245,9 +246,8 @@ function SlipBody() {
             setActionPending(true);
             try {
               const code = await createBookingAsync();
-              setBookingCode(code);
-              navigator.clipboard?.writeText(code);
-              toast.success(`Booking code ${code} created and copied!`);
+              if (navigator.clipboard) await navigator.clipboard.writeText(code);
+              toast.success(`Booking code ${code} created!`);
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Failed to book slip");
             } finally {
@@ -264,6 +264,7 @@ function SlipBody() {
           disabled={
             actionPending ||
             loading ||
+            !settingsReady ||
             stake < settings.MinStake ||
             stake > settings.MaxStake ||
             totalReturnWithBonus > settings.MaxPayOut
@@ -272,8 +273,11 @@ function SlipBody() {
             setActionPending(true);
             try {
               const bet = await placeBetAsync();
-              setBookingCode(null);
-              toast.success(`Bet placed successfully! Ticket: ${bet.code}`);
+              toast.success(
+                bet
+                  ? `Bet placed successfully! Ticket: ${bet.code}`
+                  : "Bet accepted. View your ticket in My bets.",
+              );
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Bet placement failed");
             } finally {

@@ -10,7 +10,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { smartBetApi, type CountryWithLeagues } from "@/lib/api-smartbet";
 import { adaptPrematchGame } from "@/lib/matches-adapter";
-import { matches as fallbackMatches, type Match } from "@/lib/betting-data";
+import { type Match } from "@/lib/betting-data";
 
 let cachedMatches: Match[] | null = null;
 let cachedCountries: CountryWithLeagues[] | null = null;
@@ -21,11 +21,11 @@ export function getCachedMatchById(id: string): Match | undefined {
     const found = cachedMatches.find((m) => m.id === id);
     if (found) return found;
   }
-  return fallbackMatches.find((m) => m.id === id);
+  return undefined;
 }
 
 export function usePrematchGames() {
-  const [matches, setMatches] = useState<Match[]>(() => cachedMatches || fallbackMatches);
+  const [matches, setMatches] = useState<Match[]>(() => cachedMatches || []);
   const [countries, setCountries] = useState<CountryWithLeagues[]>(() => cachedCountries || []);
   const [loading, setLoading] = useState<boolean>(() => !cachedMatches);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +48,8 @@ export function usePrematchGames() {
             cachedMatches = adapted;
             return adapted;
           }
-          return fallbackMatches;
+          cachedMatches = [];
+          return [];
         })();
       }
 
@@ -57,10 +58,12 @@ export function usePrematchGames() {
         smartBetApi.getCountriesWithLeagues().catch(() => []),
       ]);
 
-      if (adaptedMatches.status === "fulfilled" && adaptedMatches.value.length > 0) {
+      if (adaptedMatches.status === "fulfilled") {
         setMatches(adaptedMatches.value);
       } else {
-        setMatches(cachedMatches || fallbackMatches);
+        setMatches(cachedMatches || []);
+        if (adaptedMatches.status === "rejected")
+          setError("SmartBet games are temporarily unavailable.");
       }
 
       if (countriesData.status === "fulfilled" && Array.isArray(countriesData.value)) {
@@ -68,9 +71,8 @@ export function usePrematchGames() {
         setCountries(countriesData.value);
       }
     } catch (err) {
-      console.warn("[usePrematchGames] Error fetching games feed, using cache or fallback:", err);
       setError(err instanceof Error ? err.message : "Failed to load feed");
-      setMatches(cachedMatches || fallbackMatches);
+      setMatches(cachedMatches || []);
     } finally {
       inFlightFetch = null;
       setLoading(false);

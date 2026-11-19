@@ -2,8 +2,7 @@
  * routes/booking-code.tsx — BOOKING CODE page.
  * Lets a user load a shared bet slip from a SmartBet booking code or receipt.
  * Integrated with SmartBet Ticket & Receipt APIs:
- * - GET /api/Bet/Receipt/{receiptId}
- * - GET /api/Receipt/GetById/{receiptId}
+ * - GET /api/Ticket/GetBooking?Id={numericBookingCode}
  */
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -33,11 +32,12 @@ export const Route = createFileRoute("/booking-code")({
 });
 
 function BookingCodePage() {
-  const { loadBookingCode, selections, totalOdds, stake } = useBetSlip();
+  const { loadBookingCode, selections, totalOdds, stake, bookingCode, createBookingAsync } =
+    useBetSlip();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const myCode = "SB7HQ21";
+  const myCode = bookingCode;
 
   const load = async () => {
     const cleanCode = code.trim().toUpperCase();
@@ -71,7 +71,7 @@ function BookingCodePage() {
             id="code"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="e.g. SB7HQ21"
+            placeholder="e.g. 123456"
             className="uppercase font-mono tracking-wider"
           />
           <Button type="button" onClick={load} disabled={loading || !code.trim()}>
@@ -90,15 +90,24 @@ function BookingCodePage() {
         <div className="flex items-center justify-between rounded-md bg-secondary px-3 py-2.5">
           <span className="flex items-center gap-2 font-display text-lg font-bold tracking-widest text-primary dark:text-accent">
             <Ticket className="h-4 w-4" />
-            {myCode}
+            {myCode || "Create a code"}
           </span>
           <button
             type="button"
-            onClick={() => {
-              navigator.clipboard?.writeText(myCode);
-              setCopied(true);
-              toast.success("Booking code copied to clipboard");
-              setTimeout(() => setCopied(false), 2000);
+            disabled={loading || selections.length === 0}
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const shareCode = myCode || (await createBookingAsync());
+                await navigator.clipboard.writeText(shareCode);
+                setCopied(true);
+                toast.success("Booking code copied to clipboard");
+                setTimeout(() => setCopied(false), 2000);
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Could not share this slip.");
+              } finally {
+                setLoading(false);
+              }
             }}
             className="inline-flex items-center gap-1 text-xs font-bold uppercase hover:opacity-80"
           >

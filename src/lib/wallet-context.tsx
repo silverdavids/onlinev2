@@ -10,11 +10,20 @@
  * Integrates with SmartBet Online API routes:
  * - GET /api/Online/UserInfo
  * - GET /api/Account/Bonuses
- * - GET /api/Statement/User?userid=...
+ * - GET /api/Statement/Me (identity-scoped and paginated)
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  type ReactNode,
+} from "react";
 import type { WalletTransaction } from "@/modules/wallet/wallet.functions";
+import { createRequestEpoch } from "@/lib/request-epoch";
 import { useAuth } from "@/hooks/use-auth";
 import { smartBetApi, type BonusesResponse, type StatementRow } from "@/lib/api-smartbet";
 
@@ -35,6 +44,7 @@ export type WalletContextValue = {
 const WalletContext = createContext<WalletContextValue | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  const requests = useRef(createRequestEpoch());
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [balance, setBalance] = useState<number | null>(null);
   const [bonusBalance, setBonusBalance] = useState<number | null>(null);
@@ -47,7 +57,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadWallet = useCallback(async () => {
+    const request = requests.current.next();
     if (authLoading) return;
+    setLoading(true);
 
     if (!isAuthenticated) {
       setBalance(null);
@@ -78,6 +90,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         smartBetApi.getBonuses(),
       ]);
 
+      if (!requests.current.isCurrent(request)) return;
       if (userInfoRes.status === "fulfilled" && userInfoRes.value) {
         const info = userInfoRes.value;
         if (typeof info.Balance === "number" && Number.isFinite(info.Balance)) {
@@ -105,16 +118,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (user?.id) {
         try {
           const stmtRows = await smartBetApi.getStatement();
-          if (Array.isArray(stmtRows)) {
+          if (requests.current.isCurrent(request) && Array.isArray(stmtRows)) {
             setStatement(stmtRows);
+            setTransactions(
+              stmtRows.map((row) => ({
+                id: row.TransactionId,
+                type: row.Type,
+                status: "posted",
+                direction: row.Amount < 0 ? "debit" : "credit",
+                amount: Math.abs(row.Amount),
+                currency: "UGX",
+                reference: row.Description || null,
+                metadata: { balance: row.Balance },
+                created_at: row.Date,
+              })),
+            );
           }
         } catch {
           // Safe if offline
         }
       }
-
-      setTransactions([]);
     } catch (err) {
+      if (!requests.current.isCurrent(request)) return;
       setBalance(null);
       setBonusBalance(null);
       setAccountId(null);
@@ -124,12 +149,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setStatement([]);
       setBonuses(null);
     } finally {
-      setLoading(false);
+      if (requests.current.isCurrent(request)) setLoading(false);
     }
   }, [authLoading, isAuthenticated, user]);
 
   useEffect(() => {
-    loadWallet();
+    const epoch = requests.current;
+    void loadWallet();
+    return () => epoch.invalidate();
   }, [loadWallet]);
 
   const refresh = useCallback(async () => {

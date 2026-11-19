@@ -1,5 +1,7 @@
 /** Same-origin, status-preserving proxy for the SmartBet backend. */
 
+import { normalizeRecoveryPhone, RECOVERY_PURPOSE } from "./password-recovery.ts";
+
 const DEFAULT_BACKEND_URL = "https://online.smartbet.ug";
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]);
 const BODY_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -18,7 +20,8 @@ function sameOriginRequest(request: Request): boolean {
   const origin = request.headers.get("origin");
   if (!origin) return true;
   try {
-    return new URL(origin).origin === new URL(request.url).origin;
+    const parsed = new URL(origin);
+    return origin === parsed.origin && parsed.origin === new URL(request.url).origin;
   } catch {
     return false;
   }
@@ -32,7 +35,13 @@ function secureBackendCookies(headers: Headers, secure: boolean): void {
     const [nameValue, ...attributes] = cookie.split(";");
     const safeAttributes = attributes.filter((attribute) => {
       const name = attribute.trim().split("=", 1)[0]?.toLowerCase();
-      return name !== "domain" && name !== "samesite" && name !== "httponly" && name !== "secure";
+      return (
+        name !== "domain" &&
+        name !== "path" &&
+        name !== "samesite" &&
+        name !== "httponly" &&
+        name !== "secure"
+      );
     });
     safeAttributes.push("Path=/", "HttpOnly", "SameSite=Lax");
     if (secure) safeAttributes.push("Secure");
@@ -73,12 +82,22 @@ export async function handleApiProxy(request: Request): Promise<Response> {
 
   const base = backendBaseUrl();
   const target = new URL(`${incomingUrl.pathname}${incomingUrl.search}`, base);
+  if (
+    method === "POST" &&
+    (base.origin === "http://localhost:49191" || base.origin === "http://127.0.0.1:49191") &&
+    target.pathname.toLowerCase() === "/api/account/getotp" &&
+    target.searchParams.getAll("purpose").length === 1 &&
+    target.searchParams.get("purpose") === RECOVERY_PURPOSE
+  ) {
+    const [phone, ...duplicates] = target.searchParams.getAll("phoneNumber");
+    const canonicalPhone = phone && !duplicates.length ? normalizeRecoveryPhone(phone) : null;
+    if (canonicalPhone) target.searchParams.set("phoneNumber", canonicalPhone);
+  }
   const headers = new Headers(request.headers);
   for (const name of [
     "host",
     "connection",
     "content-length",
-    "origin",
     "referer",
     "authorization",
     "x-smartbet-session",
@@ -94,13 +113,11 @@ export async function handleApiProxy(request: Request): Promise<Response> {
     else headers.delete("cookie");
   }
   headers.set("accept", request.headers.get("accept") || "application/json");
-    // Optional Host override for local IIS Express testing in Docker.
+  // Optional Host override for local IIS Express testing in Docker.
   // Never enable this setting in production.
   // Explicit opt-in for local IIS Express testing from Docker.
   const localBackendHost =
-    typeof process !== "undefined"
-      ? process.env["SMARTBET_LOCAL_BACKEND_HOST"]
-      : undefined;
+    typeof process !== "undefined" ? process.env["SMARTBET_LOCAL_BACKEND_HOST"] : undefined;
 
   if (
     base.protocol === "http:" &&

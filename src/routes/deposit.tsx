@@ -76,7 +76,7 @@ function DepositPage() {
   const router = useRouter();
   const { balance, bonusBalance, phoneNumber, loading, refresh, syncBalance } = useWallet();
   const [method, setMethod] = useState("mtn");
-  const [phone, setPhone] = useState("0772000000");
+  const [phone, setPhone] = useState("");
   const [phoneEdited, setPhoneEdited] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [amount, setAmount] = useState(10000);
@@ -204,11 +204,11 @@ function DepositPage() {
                 poller.method === "mtn" ? "bg-amber-400 text-slate-950" : "bg-red-600 text-white"
               }`}
             >
-              {poller.method.toUpperCase()} MoMo Prompt Sent
+              {poller.method.toUpperCase()} MoMo Request Submitted
             </span>
-            <h2 className="mt-2 font-display text-lg font-bold">Approve on Your Phone</h2>
+            <h2 className="mt-2 font-display text-lg font-bold">Await Payment Confirmation</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              A USSD confirmation prompt has been pushed to{" "}
+              When a USSD confirmation prompt arrives, approve it on{" "}
               <strong className="text-foreground">{poller.phone}</strong>.
             </p>
           </div>

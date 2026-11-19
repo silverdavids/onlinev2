@@ -6,46 +6,48 @@
  * and active bet slips.
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { smartBetApi } from "@/lib/api-smartbet";
-import { useBetSlip } from "@/lib/betslip";
+import { createRequestEpoch } from "@/lib/request-epoch";
+import { useAuth } from "@/hooks/use-auth";
 
 export function useOpenBets() {
-  const { bets } = useBetSlip();
-  const localOpenCount = bets.filter((b) => b.status === "open").length;
-
-  const [openCount, setOpenCount] = useState<number>(localOpenCount);
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id;
+  const requests = useRef(createRequestEpoch());
+  const [openCount, setOpenCount] = useState(0);
   const [loading, setLoading] = useState(false);
-
   const fetchCount = useCallback(async () => {
+    const request = requests.current.next();
+    if (authLoading || !userId) {
+      setOpenCount(0);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await smartBetApi.getOpenBetsCount();
-      let remoteCount = 0;
-      if (typeof res === "number") {
-        remoteCount = res;
-      } else if (
-        res &&
-        typeof res === "object" &&
-        typeof (res as { count: number }).count === "number"
-      ) {
-        remoteCount = (res as { count: number }).count;
-      }
-      setOpenCount(Math.max(remoteCount, localOpenCount));
+      const result = await smartBetApi.getOpenBetsCount();
+      if (requests.current.isCurrent(request))
+        setOpenCount(
+          typeof result === "number" && Number.isSafeInteger(result) && result >= 0 ? result : 0,
+        );
     } catch {
-      setOpenCount(localOpenCount);
+      if (requests.current.isCurrent(request)) setOpenCount(0);
     } finally {
-      setLoading(false);
+      if (requests.current.isCurrent(request)) setLoading(false);
     }
-  }, [localOpenCount]);
-
+  }, [authLoading, userId]);
   useEffect(() => {
-    fetchCount();
+    const epoch = requests.current;
+    void fetchCount();
+    const refresh = () => {
+      void fetchCount();
+    };
+    window.addEventListener("smartbet:bet-accepted", refresh);
+    return () => {
+      epoch.invalidate();
+      window.removeEventListener("smartbet:bet-accepted", refresh);
+    };
   }, [fetchCount]);
-
-  return {
-    openCount,
-    loading,
-    refresh: fetchCount,
-  };
+  return { openCount, loading, refresh: fetchCount };
 }

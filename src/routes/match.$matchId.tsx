@@ -375,10 +375,12 @@ function MatchDetail() {
             match: `${match.home} v ${match.away}`,
             market: marketName,
             pick: o.label,
+            betOption: o.id,
+            ...(o.line !== undefined ? { line: o.line } : {}),
             odds: o.odds,
-            betCategory: o.betCategory,
-            matchOddId: o.matchOddId,
-            bookMakerId: o.bookMakerId,
+            ...(o.betCategory !== undefined ? { betCategory: o.betCategory } : {}),
+            ...(o.matchOddId !== undefined ? { matchOddId: o.matchOddId } : {}),
+            ...(o.bookMakerId !== undefined ? { bookMakerId: o.bookMakerId } : {}),
             isLive: Boolean(match.live),
           })
         }

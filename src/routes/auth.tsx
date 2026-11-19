@@ -4,11 +4,11 @@
  * Integrates directly with SmartBet Online Authentication & Registration APIs:
  * - POST /api/Account/Login (username, password, rememberMe)
  * - POST /api/Account/Register (email, phoneNumber, userName, NIN, dob, FirstName, SurName, PromoCode)
- * - POST /api/Account/validate-otp & POST /api/Account/VerifyOtpAndSetPassword
- * - PostgreSQL user profile & preferences sync in Supabase
+ * - POST /api/Account/GetOTP and POST /api/Account/VerifyOtpAndSetPassword for password recovery
+ * Registration stays disabled until the registration OTP risks are resolved.
  */
 import { useState } from "react";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +18,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { smartBetApi } from "@/lib/api-smartbet";
 import { useWallet } from "@/hooks/use-wallet";
 import { useAuth } from "@/hooks/use-auth";
+import { PasswordRecovery } from "@/components/password-recovery";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { view?: "reset-password" } =>
+    search["view"] === "reset-password" ? { view: "reset-password" } : {},
   head: () => ({
     meta: [
       { title: "Sign in or register · SMARTBET" },
@@ -40,6 +43,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const router = useRouter();
+  const { view } = Route.useSearch();
   const { refreshAuth } = useAuth();
   const { refresh } = useWallet();
   const [agree, setAgree] = useState(false);
@@ -54,12 +58,6 @@ function AuthPage() {
     pass: string;
   }>({ phone: "", email: "", userName: "", pass: "" });
   const [otpCode, setOtpCode] = useState("");
-
-  // Forgot password modal/toggle
-  const [showForgot, setShowForgot] = useState(false);
-  const [forgotPhone, setForgotPhone] = useState("");
-  const [forgotCode, setForgotCode] = useState("");
-  const [forgotNewPass, setForgotNewPass] = useState("");
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -95,7 +93,7 @@ function AuthPage() {
       return;
     }
     toast.error(
-      "Registration is unavailable until SmartBet's registration and OTP contract is verified.",
+      "Registration is unavailable until SmartBet's registration and OTP security issues are resolved.",
     );
   }
 
@@ -106,26 +104,10 @@ function AuthPage() {
     setPending(true);
     try {
       toast.error(
-        "OTP verification is unavailable until SmartBet's registration and OTP contract is verified.",
+        "OTP verification is unavailable until SmartBet's registration and OTP security issues are resolved.",
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "OTP validation failed");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function handleForgotPass(e: React.FormEvent) {
-    e.preventDefault();
-    if (!forgotPhone || !forgotCode || !forgotNewPass) return;
-
-    setPending(true);
-    try {
-      toast.error(
-        "Password reset is unavailable until SmartBet's password reset contract is verified.",
-      );
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Password reset failed");
     } finally {
       setPending(false);
     }
@@ -178,57 +160,8 @@ function AuthPage() {
             Proceed to Sign in
           </Button>
         </div>
-      ) : showForgot ? (
-        <form
-          onSubmit={handleForgotPass}
-          className="space-y-4 rounded-lg border border-border bg-card p-4"
-        >
-          <h2 className="font-display text-sm font-bold uppercase">Reset Password</h2>
-          <div className="space-y-1.5">
-            <Label htmlFor="f-phone">Phone number or Username</Label>
-            <Input
-              id="f-phone"
-              value={forgotPhone}
-              onChange={(e) => setForgotPhone(e.target.value)}
-              placeholder="0772 000 000"
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="f-code">SMS Reset Code</Label>
-            <Input
-              id="f-code"
-              value={forgotCode}
-              onChange={(e) => setForgotCode(e.target.value)}
-              placeholder="Verification code"
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="f-pass">New Password</Label>
-            <Input
-              id="f-pass"
-              type="password"
-              value={forgotNewPass}
-              onChange={(e) => setForgotNewPass(e.target.value)}
-              placeholder="At least 8 characters"
-              required
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setShowForgot(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" disabled={pending}>
-              {pending ? "Resetting..." : "Set New Password"}
-            </Button>
-          </div>
-        </form>
+      ) : view === "reset-password" ? (
+        <PasswordRecovery onSignIn={() => void router.navigate({ to: "/auth", search: {} })} />
       ) : (
         <Tabs defaultValue="login">
           <TabsList className="grid w-full grid-cols-2">
@@ -263,13 +196,13 @@ function AuthPage() {
               <Button type="submit" className="w-full" disabled={pending}>
                 {pending ? "Signing in..." : "Sign in"}
               </Button>
-              <button
-                type="button"
-                onClick={() => setShowForgot(true)}
-                className="w-full text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              <Link
+                to="/auth"
+                search={{ view: "reset-password" }}
+                className="block w-full text-center text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
               >
                 Forgot password?
-              </button>
+              </Link>
             </form>
           </TabsContent>
 

@@ -16,12 +16,32 @@ function smartBetDevelopmentProxy(): Plugin {
     enforce: "pre",
     configureServer(server) {
       const env = loadEnv(server.config.mode, server.config.envDir, "");
-      const backendUrl = env["SMARTBET_BACKEND_URL"] || env["VITE_BACKEND_URL"];
+      const recoveryAcceptance = server.config.mode === "recovery-acceptance";
+      if (
+        recoveryAcceptance &&
+        (server.config.server.host !== "127.0.0.1" ||
+          server.config.server.port !== 49372 ||
+          !server.config.server.strictPort)
+      ) {
+        throw new Error("Recovery acceptance requires --host 127.0.0.1 --port 49372 --strictPort.");
+      }
+      const backendUrl = recoveryAcceptance
+        ? "http://127.0.0.1:49271"
+        : env["SMARTBET_BACKEND_URL"] || env["VITE_BACKEND_URL"];
       if (backendUrl) process.env["SMARTBET_BACKEND_URL"] = backendUrl;
+      const usesLocalBackend = /^http:\/\/(?:localhost|127\.0\.0\.1):49191\/?$/.test(backendUrl ?? "");
 
       server.middlewares.use((incoming, outgoing, next) => {
         if (!incoming.url || !new URL(incoming.url, "http://localhost").pathname.startsWith("/api/")) {
           next();
+          return;
+        }
+        if (
+          usesLocalBackend &&
+          !["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(incoming.socket.remoteAddress ?? "")
+        ) {
+          outgoing.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
+          outgoing.end(JSON.stringify({ message: "Local development API requires loopback access." }));
           return;
         }
 

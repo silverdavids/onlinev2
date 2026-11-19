@@ -1,9 +1,12 @@
+import { useAuth } from "@/hooks/use-auth";
+import { createRequestEpoch } from "@/lib/request-epoch";
+import { useRef } from "react";
 /**
  * routes/my-bets.index.tsx — MY BETS list.
  * Collapsed receipt cards (stake, total odds, potential, status) with an
  * Open/Settled filter. Integrated with SmartBet Online MyBets API:
  * - GET /api/Online/MyBets
- * - Local ticket persistence and Supabase synchronization
+ * Current-user receipts come only from the existing backend.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
@@ -35,6 +38,8 @@ export const statusStyles: Record<string, string> = {
   open: "bg-secondary text-secondary-foreground",
   won: "bg-accent text-accent-foreground",
   lost: "bg-muted text-muted-foreground",
+  refunded: "bg-secondary text-secondary-foreground",
+  cancelled: "bg-muted text-muted-foreground",
 };
 
 const filters = [
@@ -43,89 +48,34 @@ const filters = [
 ] as const;
 
 function MyBets() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const requests = useRef(createRequestEpoch());
   const [filter, setFilter] = useState<"open" | "settled">("open");
   const [remoteBets, setRemoteBets] = useState<PlacedBet[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadRemoteBets = useCallback(async () => {
+    const request = requests.current.next();
+    setRemoteBets([]);
+    setLoading(false);
+    if (!userId) return;
     setLoading(true);
     try {
       // Fetch history only from the SmartBet backend.
-      let serverRows: Array<{
-        ReceiptId?: string | number;
-        BookingCode?: string;
-        Stake?: number;
-        Odds?: number;
-        Payout?: number;
-        Status?: string;
-        Date?: string;
-        selections?: unknown[];
-      }> = [];
-
-      try {
-        serverRows = (await smartBetApi.getMyBets()) as typeof serverRows;
-      } catch {
-        setRemoteBets([]);
-        return;
-      }
-
-      const adaptedMap = new Map<string, PlacedBet>();
-
-      if (Array.isArray(serverRows) && serverRows.length > 0) {
-        serverRows.forEach((row) => {
-          const idValue = row.ReceiptId || row.BookingCode;
-          const codeValue = row.BookingCode || row.ReceiptId;
-          if (
-            !idValue ||
-            !codeValue ||
-            typeof row.Stake !== "number" ||
-            typeof row.Odds !== "number" ||
-            typeof row.Payout !== "number" ||
-            !["open", "won", "lost"].includes(String(row.Status || "").toLowerCase())
-          )
-            return;
-          const id = String(idValue);
-          const code = String(codeValue);
-
-          const rawSelections =
-            Array.isArray(row.selections) && row.selections.length > 0
-              ? (row.selections as Array<Record<string, unknown>>)
-              : [];
-
-          const selections = rawSelections.map((leg, idx) => ({
-            id: String(leg["id"] || `leg-${id}-${idx}`),
-            matchId: String(leg["matchId"] || ""),
-            match: String(leg["match"] || leg["MatchName"] || ""),
-            market: String(leg["market"] || leg["betCategory"] || ""),
-            pick: String(leg["pick"] || leg["betOption"] || ""),
-            odds: Number(leg["odds"] ?? leg["odd"]),
-          }));
-
-          adaptedMap.set(id, {
-            id,
-            code,
-            placedAt: row.Date
-              ? new Date(row.Date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-              : "",
-            stake: row.Stake,
-            totalOdds: row.Odds,
-            potential: row.Payout,
-            status: String(row.Status).toLowerCase() as "open" | "won" | "lost",
-            selections,
-          });
-        });
-      }
-
-      setRemoteBets(Array.from(adaptedMap.values()));
+      const rows = await smartBetApi.getMyBets();
+      if (requests.current.isCurrent(request)) setRemoteBets(rows);
     } catch (err) {
-      setRemoteBets([]);
+      if (requests.current.isCurrent(request)) setRemoteBets([]);
     } finally {
-      setLoading(false);
+      if (requests.current.isCurrent(request)) setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    loadRemoteBets();
+    const epoch = requests.current;
+    void loadRemoteBets();
+    return () => epoch.invalidate();
   }, [loadRemoteBets]);
 
   const combinedBets = remoteBets;
@@ -208,7 +158,7 @@ function MyBets() {
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {bet.selections.length > 0 ? `${bet.selections.length} selections · ` : ""}
-                  {bet.placedAt}
+                  {bet.placedAt ? new Date(bet.placedAt).toLocaleString() : ""}
                 </p>
               </div>
 

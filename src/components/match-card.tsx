@@ -93,10 +93,12 @@ export function MatchCard({ match, marketId }: { match: Match; marketId?: string
                     match: `${match.home} v ${match.away}`,
                     market: main.name,
                     pick: o.label,
+                    betOption: o.id,
+                    ...(o.line !== undefined ? { line: o.line } : {}),
                     odds: o.odds,
-                    betCategory: o.betCategory || main.id,
-                    matchOddId: o.matchOddId,
-                    bookMakerId: o.bookMakerId,
+                    ...(o.betCategory !== undefined ? { betCategory: o.betCategory } : {}),
+                    ...(o.matchOddId !== undefined ? { matchOddId: o.matchOddId } : {}),
+                    ...(o.bookMakerId !== undefined ? { bookMakerId: o.bookMakerId } : {}),
                     isLive: Boolean(match.live),
                   })
                 }
